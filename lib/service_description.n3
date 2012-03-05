@@ -1,0 +1,9 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix pred: <http://air.csail.mit.edu/spim/predicate_desc.n3#>.
+
+
+http://www.w3.org/2003/01/geo/wgs84_pos#lat pred:max 70.599509
+tag:govshare.info,2005:rdf/census/households pred:max 7679307
+tag:govshare.info,2005:rdf/census/population pred:max 18976457
+http://www.w3.org/2003/01/geo/wgs84_pos#long pred:max -172.454123
