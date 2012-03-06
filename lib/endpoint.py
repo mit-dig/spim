@@ -14,6 +14,13 @@ class Endpoint:
         return None
     def getAddress(self):
         return self.address
+    def add_graph(self, graph_name, triples):
+	return
+    def append_graph(self, graph_name, triples):
+	return
+    def delete_graph(self, graph_name):
+	return
+
 
 #Creates an object with a connection to a 4store interface
 class Endpoint4Store(Endpoint):
