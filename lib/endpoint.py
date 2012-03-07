@@ -1,6 +1,6 @@
 from pprint import pprint
 from HTTP4Store import HTTP4Store
-
+import os
 
 #Interface for a query endpoint. Needs to accept an endpoint location on
 #construction, and get a query result.
@@ -14,11 +14,10 @@ class Endpoint:
         return None
     def getAddress(self):
         return self.address
-    def add_graph(self, graph_name, triples):
-	return
+    #Append ONE triple to a graph
     def append_graph(self, graph_name, triples):
 	return
-    def delete_graph(self, graph_name):
+    def delete_graph(self, graph_name, tripes):
 	return
 
 
@@ -31,6 +30,23 @@ class Endpoint4Store(Endpoint):
 
     def sendQuery(self, query): #Query the
         return self.endpoint.sparql(query)
+    def getStatus(self):
+	return self.endpoint.status()
+    def getAddress(self):
+	return self.address
+    def append_graph(self, graph_name, triples):
+	#First, replace spaces with '+' to comply with syntax
+	tripes = triples.replace(' ', '+')
+	command = "update=INSERT+DATA+{+GRAPH+" + graph_name + "+{+" + triples + "+}+}"
+	os.system("curl -i -d '" + command + "' http://localhost:86/update/")			
+    def delete_from_graph(self, graph_name, triples):
+	#Replace spaces in triple
+	triples = triples.replace(' ', '+')
+	command = "update=DELETE+DATA+{GRAPH+" + graph_name +  "+{+" + triples + "+}+}"
+	os.system("curl -i -d '" + command + "' httpd://localhost:86/update/")
+
+
+
 
 #General method to make an endpoint interface. By default, and object of
 #the superclass is made. 
@@ -39,6 +55,7 @@ def endpointFactory(endpointAddress, sparql_type):
         return Endpoint4Store(endpointAddress)
     else:
         return Endpoint(endpointAddress)
+
 
 def main():
     query = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>

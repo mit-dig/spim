@@ -13,6 +13,10 @@ import sparqlParser
 #SPARQL endpoint. Change address here. TODO make it melleable. 
 endpoint_test_address = 'http://air.csail.mit.edu:83'
 
+#Triple-store containing users. Also, graph where users are stored.
+user_list = 'http://localhost:86/"
+user_graph_name = ""
+
 class SPIM:
     def __init__(self, endpointAddress, endpointType, userProfileList = None):
         self.endpoint = endpointFactory(endpointAddress, endpointType)
