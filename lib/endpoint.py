@@ -22,6 +22,7 @@ class Endpoint:
 
 
 #Creates an object with a connection to a 4store interface
+#Note: Triples must only use whitespaces, and must be written on ONE LINE. 
 class Endpoint4Store(Endpoint):
     def __init__(self, endpointAddress):
         self.address = endpointAddress
@@ -36,14 +37,22 @@ class Endpoint4Store(Endpoint):
 	return self.address
     def append_graph(self, graph_name, triples):
 	#First, replace spaces with '+' to comply with syntax
-	tripes = triples.replace(' ', '+')
+	triples = triples.replace(' ', '+')
+	print triples
 	command = "update=INSERT+DATA+{+GRAPH+" + graph_name + "+{+" + triples + "+}+}"
-	os.system("curl -i -d '" + command + "' http://localhost:86/update/")			
+
+	command2 = "curl -i -d '" + command + "' " + self.address + "/update/"
+	print command2
+
+	os.system(command2)			
     def delete_from_graph(self, graph_name, triples):
 	#Replace spaces in triple
 	triples = triples.replace(' ', '+')
+	print triples
 	command = "update=DELETE+DATA+{GRAPH+" + graph_name +  "+{+" + triples + "+}+}"
-	os.system("curl -i -d '" + command + "' httpd://localhost:86/update/")
+	command2 = "curl -i -d '" + command + "' " + self.address + "/update/"	
+	os.system(command2)
+	print command2
 
 
 
@@ -67,6 +76,21 @@ SELECT (COUNT(?s) as ?size) WHERE {
 """
     e = Endpoint4Store('http://air.csail.mit.edu:82')
     pprint(e.sendQuery(query))
+    print "Update test" 
+    f = Endpoint4Store('http://localhost:86')
+    triple = '<http://example.com/Yotam> <http://example.com/epsValue> "1.0"'
+#    triple = '<httpd://example.com/s>+<http://example.com/p>+"o"'
+    f.append_graph("<http://air.csail.mit.edu/Users/>", triple)
+    query2 = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT * WHERE {
+ ?s ?p ?o
+} LIMIT 10
+"""
+    pprint(f.sendQuery(query2))
+    f.delete_from_graph("<http://air.csail.mit.edu/Users/>", triple)
+    pprint(f.sendQuery(query2))
     
 if __name__ == '__main__':
     main()

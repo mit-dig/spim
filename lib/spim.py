@@ -15,15 +15,17 @@ endpoint_test_address = 'http://air.csail.mit.edu:83'
 
 #Triple-store containing users. Also, graph where users are stored.
 user_list = 'http://localhost:86/"
-user_graph_name = ""
+user_graph_name = "http://air.csail.mit.edu/Users"
 
 class SPIM:
-    def __init__(self, endpointAddress, endpointType, userProfileList = None):
-        self.endpoint = endpointFactory(endpointAddress, endpointType)
-        if userProfileList == None:
-            self.userList = UserManager()
-        else:
-            self.userList = userProfileList
+	#endpointAddress = address of where is being queried
+	#endpointType = type of endpoint (e.g. 4store)
+	#userProfileList = where the user profiles are located.
+    def __init__(self, endpointAddress, endpointType, profileStore = user_list, profileStoreType = '4store',
+					userGraphName = user_graph_name):
+        self.endpoint = endpointFactory(endpointAddress, endpointType) #Endpoint being queried
+	self.userList = endpointFactory(profileStore, profileStoreType) #Endpoint with user epsilon values
+	self.userGraphName = userGraphName #Graph name with user info
 
     def acceptQuery(self, query, username, eps = 1.0):
 	user = self.userList.getUser(username)
