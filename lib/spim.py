@@ -28,6 +28,10 @@ class SPIM:
 	self.userGraphName = userGraphName #Graph name with user info
 
     def acceptQuery(self, query, username, eps = 1.0):
+	
+	#Check if user profile exists
+	query_for_profile = 'SELECT * WHERE {<http://air.csail.mit.edu/Users/' + username + ' ?p ?o}' 
+
 	user = self.userList.getUser(username)
         if user.epsExceeded(eps):
             print "EPSILON EXCEEDED"
@@ -44,7 +48,8 @@ class SPIM:
         return result
 
     def addUser(self, username, maxEps):
-        self.userList.addUser(username, maxEps)
+	triple_to_add = '<http://air.csail.mit.edu/Users/' + username + ' <http://air.csail.mit.edu/SPIM/epsValue> "' + maxEps + '".' 
+        self.userList.append_graph(self.userGraphName, triple_to_add)
      
 #Adds key to dictionary if not there, or increments count of key by one
 def incrementKey(dic, key):
