@@ -7,11 +7,12 @@ import endpoint
 from spim import SPIM
 from pprint import pprint
 
-
 print "Content-Type: text/html\n\n"
 
 def generate_site(results = ""):
-	print "<html>\n<head>\n</head>"
+	print "<html><head>\n"
+	print "Content Type: text/html\n"
+	print "</head>"
 	print "<body>\n"
 	print "<p>Please enter your desired query here</p>"
 	print "<form method='post' name='form1'>"
@@ -35,17 +36,15 @@ def main():
 	form = cgi.FieldStorage()
 	generate_site()
 	endpoint = "http://air.csail.mit.edu:81"
-
-	#Methods when query is received
 	if form.has_key("query"):
-		print "\n\nYou have entered in the following query:<br><br>"
-		print str(form["query"].value)
-		print "<br><br>"
-
-
-		#Sending the result to the spim module
-		print "The result is:<br>"
-		pprint(spimThread.acceptQuery(form['query'].value, 'user0'))
+	    	if not form.has_key("username"):
+			print "Please enter a username"
+		else:
+			print "\n\nYou have entered in the following query:<br><br>"
+			print str(form["query"].value)
+			print "<br><br>"
+			print "The result is:<br>"
+			pprint(spimThread.acceptQuery(form['query'].value, 'user0'))
 
 	
 	print "</body>\n</html>"

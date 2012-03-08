@@ -9,6 +9,9 @@ from pprint import pprint
 from userManager import UserManager, UserProfile
 import re
 import sparqlParser
+import sys
+
+sys.path.append("air-reasoner/")
 
 #SPARQL endpoint. Change address here. TODO make it melleable. 
 endpoint_test_address = 'http://air.csail.mit.edu:83'
@@ -28,7 +31,8 @@ class SPIM:
 	self.userGraphName = userGraphName #Graph name with user info
 
     def acceptQuery(self, query, username, eps = 1.0):
-	
+
+	#Part 1: Create user profile if it doesn't exist in triplesotre	
 	userURI = '<http://air.csail.mit.edu/Users/' + username + '>'
 	#Check if user profile exists
 	query_for_profile = 'SELECT * WHERE {' + userURI + ' ?p ?o}' 
@@ -40,6 +44,11 @@ class SPIM:
 
 	print str(user_result[0])
 	
+	#Part 2: 
+
+
+	#Part 3: Create object to manage differential privacy
+
 	#TODO Cache users
 	#Create user profile
 	currEps = user_result[0]['o']
