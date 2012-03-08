@@ -25,11 +25,10 @@ class UserManager:
 class UserProfile:
     def __init__(self, name, maxEps):
         self.name = name
-        self.maxEps = maxEps
-        self.eps = 0.0
+        self.eps = maxEps
 
     def epsExceeded(self, eps):
-	if self.eps + eps > self.maxEps:
+	if self.eps - eps < 0.0:
 	    return True
 	return False
 

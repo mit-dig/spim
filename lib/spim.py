@@ -14,8 +14,8 @@ import sparqlParser
 endpoint_test_address = 'http://air.csail.mit.edu:83'
 
 #Triple-store containing users. Also, graph where users are stored.
-user_list = 'http://localhost:86/"
-user_graph_name = "http://air.csail.mit.edu/Users"
+user_list = 'http://localhost:86'
+user_graph_name = "<http://air.csail.mit.edu/Users>"
 
 class SPIM:
 	#endpointAddress = address of where is being queried
@@ -29,13 +29,29 @@ class SPIM:
 
     def acceptQuery(self, query, username, eps = 1.0):
 	
+	userURI = '<http://air.csail.mit.edu/Users/' + username + '>'
 	#Check if user profile exists
-	query_for_profile = 'SELECT * WHERE {<http://air.csail.mit.edu/Users/' + username + ' ?p ?o}' 
+	query_for_profile = 'SELECT * WHERE {' + userURI + ' ?p ?o}' 
+	user_result = self.userList.sendQuery(query_for_profile)
+	if user_result == None or len(user_result) == 0:
+		print "Adding user"
+		self.addUser(username, 5.0)
+		user_result = self.userList.sendQuery(query_for_profile)
 
-	user = self.userList.getUser(username)
+	print str(user_result[0])
+	
+	#TODO Cache users
+	#Create user profile
+	currEps = user_result[0]['o']
+	currEps = str(currEps)[1:len(currEps)-1]
+	currEps = float(str(currEps))
+	print currEps
+	user = UserProfile(username, currEps)		
+		
         if user.epsExceeded(eps):
             print "EPSILON EXCEEDED"
             return
+
         countVariables = sparqlParser.extractAllVars(query) #Extract which variables are count
         result = self.endpoint.sendQuery(query)
 	for t in result: #Iterate over terms from query
@@ -45,10 +61,18 @@ class SPIM:
                     if c in t:
                     	counted = int(t[c])
                     	t[c] = user.addNoise(counted, eps)
+
+	#Update eps value in triple store
+	newEps = currEps - eps
+	triple_to_remove = userURI + ' <http://air.csail.mit.edu/SPIM/epsValue> "' + str(currEps) + '"'
+	print triple_to_remove
+	self.userList.delete_from_graph(self.userGraphName, triple_to_remove)
+	print "Deleted old eps value"
+	self.addUser(username, newEps)
         return result
 
     def addUser(self, username, maxEps):
-	triple_to_add = '<http://air.csail.mit.edu/Users/' + username + ' <http://air.csail.mit.edu/SPIM/epsValue> "' + maxEps + '".' 
+	triple_to_add = '<http://air.csail.mit.edu/Users/' + username + '> <http://air.csail.mit.edu/SPIM/epsValue> "' + str(maxEps) + '".' 
         self.userList.append_graph(self.userGraphName, triple_to_add)
      
 #Adds key to dictionary if not there, or increments count of key by one
@@ -68,7 +92,6 @@ SELECT DISTINCT (COUNT(?p) as ?size) WHERE {
 } LIMIT 1000
 """
     spim = SPIM(endpoint_test_address, '4store')
-    spim.addUser('user0', 5.0)
     pprint(spim.acceptQuery(query, 'user0'))
 
 if __name__ == '__main__':
