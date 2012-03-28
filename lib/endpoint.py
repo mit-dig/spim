@@ -35,27 +35,18 @@ class Endpoint4Store(Endpoint):
 	return self.endpoint.status()
     def getAddress(self):
 	return self.address
+
+	##HUGE SECURITY RISK!! Sudo + user-inputted username. Might be very bad
+
     def append_graph(self, graph_name, triples):
-	#First, replace spaces with '+' to comply with syntax
-	triples = triples.replace(' ', '+')
-	print triples
-	command = "update=INSERT+DATA+{+GRAPH+" + graph_name + "+{+" + triples + "+}+}"
+	print graph_name
+	self.endpoint.append_graph(graph_name, triples)
 
-	command2 = "curl -i -d '" + command + "' " + self.address + "/update/"
-	print command2
-
-	os.system(command2)			
     def delete_from_graph(self, graph_name, triples):
-	#Replace spaces in triple
-	triples = triples.replace(' ', '+')
-	print triples
-	command = "update=DELETE+DATA+{GRAPH+" + graph_name +  "+{+" + triples + "+}+}"
-	command2 = "curl -i -d '" + command + "' " + self.address + "/update/"	
-	os.system(command2)
-	print command2
-
-
-
+	#query = "DELETE { GRAPH " + graph_name + " { " + triples + " } }"
+	print graph_name
+	self.endpoint.del_graph(graph_name)
+	#print query
 
 #General method to make an endpoint interface. By default, and object of
 #the superclass is made. 
@@ -74,13 +65,14 @@ SELECT (COUNT(?s) as ?size) WHERE {
  ?s ?p ?o
 } LIMIT 10
 """
-    e = Endpoint4Store('http://air.csail.mit.edu:82')
+    e = Endpoint4Store('http://air.csail.mit.edu:86')
     pprint(e.sendQuery(query))
     print "Update test" 
+    print e.endpoint.status()
     f = Endpoint4Store('http://localhost:86')
     triple = '<http://example.com/Yotam> <http://example.com/epsValue> "1.0"'
 #    triple = '<httpd://example.com/s>+<http://example.com/p>+"o"'
-    f.append_graph("<http://air.csail.mit.edu/Users/>", triple)
+    f.append_graph("http://default.org", triple)
     query2 = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
@@ -89,7 +81,7 @@ SELECT * WHERE {
 } LIMIT 10
 """
     pprint(f.sendQuery(query2))
-    f.delete_from_graph("<http://air.csail.mit.edu/Users/>", triple)
+    f.delete_from_graph("http://default.org", triple)
     pprint(f.sendQuery(query2))
     
 if __name__ == '__main__':
