@@ -1,0 +1,37 @@
+#Simple policy to test policyrunner as part of the spim module when used with the geocities module.
+#User may not search for the population of a state, city, county, etc in the US data set.
+
+@prefix : <http://air.csail.mit.edu/spim/air-policies/census_policy1#> .
+@prefix air: <http://dig.csail.mit.edu/TAMI/2007/amord/air#> .
+@prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+@prefix census: <tag:govshare.info,2005:rdf/census/> .
+@prefix usgovt: <tag:govshare.info,2005:rdf/usgovt/> .
+@prefix s: <http://dig.csail.mit.edu/2009/IARPA-PIR/sparql#> .
+@prefix log: <httpL//www.w3.org/2000/10/swap/log#>.
+
+@forAll :Q, :P, :W .
+
+:CensusPolicy1 a air:Policy;
+	air:rule :CensusP1_rule1 .
+
+:CensusP1_rule1 a air:BeliefRule;
+	air:label "Census Policy1 Rule 1";
+	air:if{
+		:Q a s:Select;
+		s:POSList :P;
+		s:WhereClause :W. };
+	air:then [air:rule :CensusP1_rule2].
+
+:CensusP1_rule2 a air:BeliefRule;
+	air:label "Census Policy1 rule 2";
+	air:if{
+		:P s:variable :V.
+		:W s:TriplePattern :T.
+		:T log:includes {:X census:population :POP}.
+	}
+	air:then [air:assert {:Q air:non-compliant-with :CensusPolicy1 . } ];
+	air:else [air:assert {:Q air:compliant-with :CensusPolicy1 .} ] .
+
+
+
+

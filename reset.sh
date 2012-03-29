@@ -1,0 +1,1 @@
+/home/oshani/4store_maintenance/4store-reset.sh
