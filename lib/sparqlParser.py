@@ -4,6 +4,7 @@ import re
 import string
 
 selectFindA = re.compile(r'SELECT[a-zA-Z\?\(\) ]*')
+whereFind = re.compile(r'[wW][hH][eE][rR][eE][ \r\t\n]*\{[a-zA-Z\?\(\)<> -_:\;\.\r\n\t]*\}')
 #countFindA = re.compile(r'COUNT\([\?a-zA-Z ]+\)')
 ExprFind = re.compile(r'\([\?a-zA-Z ]+\)')
 countFind = re.compile(r'\([cC][oO][uU][nN][tT]\(\?[a-zA-Z]+\) [aA][sS] \?[a-zA-Z]+\)')
@@ -11,6 +12,35 @@ sumFind = re.compile(r'\([sS][uU][mM]\(\?[a-zA-Z]+\) [aA][sS] \?[a-zA-Z]+\)')
 avgFind = re.compile(r'\([aA][vV][gG]\(\?[a-zA-Z]+\) [aA][sS] \?[a-zA-Z]+\)')
 minFind = re.compile(r'\([mM][iI][nN]\(\?[a-zA-Z]+\) [aA][sS] \?[a-zA-Z]+\)')
 maxFind = re.compile(r'\([mM][aA][xX]\(\?[a-zA-Z]+\) [aA][sS] \?[a-zA-Z]+\)')
+
+#The following functions are used to replace a function with a given function. E.g. replace "sum" with "max".
+#Will have to use 
+def extract_full_func(tag, query):
+    if tag == "COUNT":
+	return countFind.findall(query)
+    if tag == "SUM":
+	return sumFind.findall(query)
+    if tag == "AVG":
+	return avgFind.findall(query)
+    if tag == "MIN":
+	return minFind.findall(query)
+    if tag == "MAX":
+	return maxFind.findall(query)
+    else:
+	print "Error, wrong tag in extract_full_func"
+	return None
+
+def extract_all_sum(query):
+	return sumFind.findall(query)
+
+def extract_all_avg(query):
+	return avgFind.findall(query)
+
+def extract_all_min(query):
+	return minFind.findall(query)
+
+def extract_all_max(query):
+	return maxFind.findall(query)
 
 
 #Count COUNT, SUM, AVG, MIN, and MAX, and return dictionary with these tags
@@ -21,6 +51,14 @@ def extractAllVars(query):
     for t in tags:
         allVars[t] = extractVars(query, t)
     return allVars
+
+#Extract the where clause
+def extractWhere(query):
+    found = whereFind.findall(query)
+    if len(found) < 1:
+	return ''
+    else:
+	return found[0]
 
 #Will extract vars for a certain aggregate function, and return a list of
 #variables that will be bound to that function.
@@ -97,8 +135,12 @@ def replaceCount(query):
                 
 
 def main():
-    query = "SELECT (min(?s) as ?rand) (SUM(?P) as ?size) ?d WHERE(?P ?s ?m)"
+    query = """SELECT DISTINCT (SUM(?o) as ?size) WHERE 
+	{?s ?p ?o 
+FILTER(isNumeric(?o)) 
+} LIMIT 1000"""
     print extractAllVars(query)
+    print extractWhere(query)
     
 
 if __name__ == "__main__":

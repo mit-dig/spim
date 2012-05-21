@@ -2,14 +2,29 @@
 
 import sys
 import cgi
+from os import environ
 sys.path.append('lib/')
 import endpoint
 from spim import SPIM
 from pprint import pprint
+import string
 
+hasUser = False
+hasPassword = False
+
+def generate_auth_site():
+	print "<html>\n<head>\n<title>Spim Online Demo </title>\n</head>"
+	print "<body>\n Please input a username and password <br\>"
+	print "<form method='post' name='form_auth'>"
+	print """Username: <input type='text' name='username'> <br\>
+	     Password: <input type='text' name='password'> <br\>
+		"""
+	print "<input type='submit' value='enter'></input>\n"
+	print "</form>"
+	print "</body></html>"
 
 def generate_site(results = ""):
-	
+	print "Hello!"
 	print "<html>\n<head> \n<title>Spim Online Demo </title>\n</head>"
 	print "<body>\n"
 	print "<p>Please enter your desired query here</p>"
@@ -18,9 +33,10 @@ def generate_site(results = ""):
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT DISTINCT (COUNT(?p) as ?size) WHERE {
+SELECT DISTINCT (SUM(?o) as ?size) WHERE {
 	?s ?p ?o
-} LIMIT 1000
+FILTER(isNumeric(?o))
+}
 	 </textarea>\n"""
 
 	print "<br /> Username: <input type='text' name='username' /> <br />"
@@ -30,11 +46,39 @@ SELECT DISTINCT (COUNT(?p) as ?size) WHERE {
 
 def main():
 
-	endpoint_address = "http://air.csail.mit.edu:83"
-	spimThread = SPIM(endpoint_address, '4store')
-	form = cgi.FieldStorage()
 	print "Content-Type: text/html\n\n"
+	endpoint_address = "http://air.csail.mit.edu:81"
+	spimThread = SPIM(endpoint_address, '4store', 'lib/endpoint_ranges.n3')
+	form = cgi.FieldStorage()
+
+	#Check for username/password
+
+	if form.has_key("username") and form.has_key("password"):
+	    	hasUser = True
+	    	hasPassword = True
+
+	elif environ.has_key('HTTP_COOKIE'):
+	    	for cookie in string.split(environ['HTTP_COOKIE'], ';'):
+			print cookie
+			print "<br/><br/>"
+#			print string.split(cookie, '=')
+#			print "<br/>"
+#			(key, value) = string.split(cookie, '=')
+#			if key == "UserID":
+#		    		user_id = value
+#		    		hasUser = True
+#
+#			if key == "Password":
+#		    		password = value
+#		    		hasPassword = True
+
+	else:
+	    	generate_auth_site()
+		return
+
 	generate_site()
+
+	return
 	endpoint = "http://air.csail.mit.edu:81"
 
 	#Methods when query is received

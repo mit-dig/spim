@@ -1,0 +1,31 @@
+# Sample policy for use of database about internet use on the web, from SPARQL endpoint on localhost:81
+
+@prefix : <http://dig.csail.mit.edu/TAMI/2007/cwmrete/nonce#> .
+@prefix air: <http://dig.csail.mit.edu/TAMI/2007/amord/air#> .
+@prefix webOntology: <http://data-gov.tw.rpi.edu/vocab/p/10040#> .
+@prefix s: <http://dig.csail.mit.edu/2009/IARPA-PIR/sparql#> .
+@prefix log: <http://www.w3.org/2000/10/swap/log#>.
+
+
+@forAll :Q, :P, :W, :X, :Y, :Z, :T.
+
+:NoRuralWebPolicy a air:Policy;
+	air:rule :NoRuralWebRule1 .
+
+:NoRuralWebRule1 a air:Belief-rule ;
+	air:if {:Q a s:Select;
+		s:POSList :P;
+		s:WhereClause :W.
+	};
+	air:then[ air:rule :NoRuralWebRule2;
+			air:description (:Q " is a SPARQL query") ] .
+
+:NoRuralWebRule2 a air:Belief-rule ;
+	air:if {:W s:TriplePattern :T.
+		:T log:includes {:X webOntology:rural_internet_use_anywhere :Y}
+	     };
+
+	air:description ("The query " :Q: " searches based off rural internet use, which is not allowed");
+	air:then [ air:assert {:Q air:non-compliant-with :NoRuralWebPolicy .} ];
+	air:else [ air:assert {:Q air:compliant-with :NoRuralWebPolicy . } ] .
+

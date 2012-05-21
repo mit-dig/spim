@@ -1,0 +1,52 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix pred: <http://air.csail.mit.edu/spim/predicate_desc.n3#>.
+
+
+<http://data-gov.tw.rpi.edu/vocab/p/10040/principal_city_internet_use_anywhere> pred:max "98.53" ; pred:min "34.6".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/principal_city_internet_use_in_the_home_dial_up_no> pred:max "1464.0" ; pred:min "0.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/urban_internet_use_in_the_home_urban_total_no> pred:max "66746.0" ; pred:min "69.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/urban_internet_use_in_the_home_dial_up> pred:max "5.67" ; pred:min "1.12".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/rural_internet_use_in_the_home_total_no> pred:max "15193.0" ; pred:min "0.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/total_no_internet_use> pred:max "66.53" ; pred:min "1.46".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/urban_internet_use_in_the_home_broadband_no> pred:max "62842.0" ; pred:min "61.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/total_internet_use_anywhere> pred:max "98.54" ; pred:min "33.47".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/total_internet_use_in_the_home_total_no> pred:max "81939.0" ; pred:min "156.0".
+<http://data-gov.tw.rpi.edu/2009/data-gov-twc.rdf#number_of_triples> pred:max "4293.0" ; pred:min "4293.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/principal_city_internet_use_in_the_home_total> pred:max "97.32" ; pred:min "25.63".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/principal_city_internet_use_in_the_home_dial_up> pred:max "7.12" ; pred:min "0.97".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/principal_city_internet_use_anywhere_no> pred:max "30146.0" ; pred:min "21.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/rural_internet_use_in_the_home_dial_up_no> pred:max "2141.0" ; pred:min "0.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/urban_internet_use_in_the_home_dial_up_no> pred:max "3507.0" ; pred:min "3.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/urban_no_internet_use> pred:max "65.0" ; pred:min "1.34".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/urban_internet_use_in_the_home_urban_total> pred:max "97.65" ; pred:min "25.96".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/total_no_internet_use_no> pred:max "27826.0" ; pred:min "36.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/total_internet_use_in_the_home_broadband_no> pred:max "75792.0" ; pred:min "147.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/rural_no_internet_use_no> pred:max "6686.0" ; pred:min "0.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/total_internet_use_in_the_home_dial_up_no> pred:max "5649.0" ; pred:min "7.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/principal_city_no_internet_use> pred:max "65.4" ; pred:min "1.47".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/total_internet_use_in_the_home_broadband> pred:max "95.5" ; pred:min "21.35".
+<http://data-gov.tw.rpi.edu/2009/data-gov-twc.rdf#number_of_entries> pred:max "93.0" ; pred:min "93.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/rural_internet_use_in_the_home_dial_up> pred:max "17.68" ; pred:min "0.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/principal_city_internet_use_in_the_home_broadband> pred:max "95.86" ; pred:min "22.09".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/rural_no_internet_use> pred:max "72.16" ; pred:min "0.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/principal_city_no_internet_use_no> pred:max "9598.0" ; pred:min "3.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/principal_city_internet_use_in_the_home_broadband_no> pred:max "24994.0" ; pred:min "14.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/urban_internet_use_in_the_home_broadband> pred:max "96.07" ; pred:min "22.53".
+<http://data-gov.tw.rpi.edu/2009/data-gov-twc.rdf#number_of_properties> pred:max "53.0" ; pred:min "53.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/urban_internet_use_anywhere> pred:max "98.66" ; pred:min "35.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/urban_internet_use_anywhere_no> pred:max "74195.0" ; pred:min "80.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/urban_total_households> pred:max "95334.0" ; pred:min "96.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/rural_internet_use_in_the_home_total> pred:max "95.49" ; pred:min "0.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/total_internet_use_anywhere_no> pred:max "91471.0" ; pred:min "179.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/principal_city_total_households> pred:max "39744.0" ; pred:min "24.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/rural_internet_use_in_the_home_broadband> pred:max "91.89" ; pred:min "0.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/rural_internet_use_in_the_home_broadband_no> pred:max "12951.0" ; pred:min "0.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/rural_total_households> pred:max "23962.0" ; pred:min "0.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/rural_internet_use_anywhere_no> pred:max "17276.0" ; pred:min "0.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/rural_internet_use_anywhere> pred:max "97.68" ; pred:min "0.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/total_internet_use_in_the_home_total> pred:max "97.38" ; pred:min "25.18".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/total_households> pred:max "119296.0" ; pred:min "224.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/principal_city_internet_use_in_the_home_total_no> pred:max "26615.0" ; pred:min "16.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/urban_no_internet_use_no> pred:max "21139.0" ; pred:min "16.0".
+<http://data-gov.tw.rpi.edu/vocab/p/10040/total_internet_use_in_the_home_dial_up> pred:max "9.31" ; pred:min "1.47".

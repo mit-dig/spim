@@ -30,6 +30,9 @@ class Endpoint4Store(Endpoint):
 	self.type = '4store'
 
     def sendQuery(self, query): #Query the
+#	print "<br>Will query from " + self.address + " </br>"
+#	print query
+#	print "<br>%%%</br>"
         return self.endpoint.sparql(query)
     def getStatus(self):
 	return self.endpoint.status()
@@ -39,7 +42,7 @@ class Endpoint4Store(Endpoint):
 	##HUGE SECURITY RISK!! Sudo + user-inputted username. Might be very bad
 
     def append_graph(self, graph_name, triples):
-	print graph_name
+#	print graph_name
 	self.endpoint.append_graph(graph_name, triples)
 
     def delete_from_graph(self, graph_name, triples):
@@ -47,6 +50,8 @@ class Endpoint4Store(Endpoint):
 	print graph_name
 	self.endpoint.del_graph(graph_name)
 	#print query
+
+
 
 #General method to make an endpoint interface. By default, and object of
 #the superclass is made. 

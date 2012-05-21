@@ -23,16 +23,21 @@ endpoint_test_address = 'http://air.csail.mit.edu:83'
 user_list = 'http://localhost:86'
 user_graph_name_base = "<http://air.csail.mit.edu/Users/"
 
-policy_file = "census_policy1.n3"
+#endpoint min/max ranges file
+default_ranges_file = "endpoint_ranges.n3"
+
+
+#Information for policyrunner
 
 
 class SPIM:
 	#endpointAddress = address of where is being queried
 	#endpointType = type of endpoint (e.g. 4store)
 	#userProfileList = where the user profiles are located.
-    def __init__(self, endpointAddress, endpointType, profileStore = user_list, profileStoreType = '4store'):
+    def __init__(self, endpointAddress, endpointType, ranges_file = default_ranges_file, profileStore = user_list, profileStoreType = '4store'):
         self.endpoint = endpointFactory(endpointAddress, endpointType) #Endpoint being queried
 	self.userList = endpointFactory(profileStore, profileStoreType) #Endpoint with user epsilon values
+	self.endpoint_ranges = parse_ranges(ranges_file) 
 
     def acceptQuery(self, query, username, eps = 1.0):
 
@@ -71,19 +76,32 @@ class SPIM:
 	user = UserProfile(username, currEps)		
         if user.epsExceeded(eps):
             return "EPSILON EXCEEDED"
+#	    print "EPSILON EXCEEDED"
 
-        countVariables = sparqlParser.extractAllVars(query) #Extract which variables are count
-        result = self.endpoint.sendQuery(query)
+	#Part 4: Calc query sensitivity
+	
+
+        allVariables = sparqlParser.extractAllVars(query)
+	whereClause = sparqlParser.extractWhere(query)
+	query_sensitivity_all = self.calc_func_sensitivity(whereClause, allVariables, query)
+	query_sensitivity = query_sensitivity_all
+#	print query_sensitivity_all
+#	print "DSLFJS"
+
+	#Send query 
+
+	result = self.endpoint.sendQuery(query)
+#	print result
 	for t in result: #Iterate over terms from query
-	    for tag in countVariables:
-		tagVars = countVariables[tag]
+	    for tag in allVariables:
+		tagVars = allVariables[tag]
             	for c in tagVars: #Check over variables found
                     if c in t:
-                    	counted = int(t[c])
-                    	t[c] = user.addNoise(counted, eps)
+                    	counted = float(t[c])
+                    	t[c] = user.addNoise(counted, eps, query_sensitivity)
 	#Update eps value in triple store
 	newEps = currEps - eps
-#	print "New eps: ", newEps
+	print "New eps: ", newEps
 
 	#In a future implementation, this deletion should be made correct and addee back in.
 #	triple_to_remove = userURI + ' <http://air.csail.mit.edu/SPIM/epsValue> "' + str(currEps) + '"'
@@ -91,7 +109,7 @@ class SPIM:
 
 	#Add new eps value
 	self.addUser(username, newEps)
-#	print "finished"
+	print "Finished<br>"
         return result
 
     def addUser(self, username, maxEps):
@@ -99,6 +117,91 @@ class SPIM:
 	triple_to_add = user_graph_name + ' <http://air.csail.mit.edu/SPIM/epsValue> "' + str(maxEps) + '".' 
         self.userList.append_graph(user_graph_name, triple_to_add)
 	print triple_to_add
+
+	#Calculates the function's sensitivity. 
+    def calc_func_sensitivity(self, whereClause, allVars, query):
+	sens = 1.0
+	testR =  self.endpoint.sendQuery(query)
+	for v in allVars:
+	    if len(allVars[v]) > 0:	#We need to calculate this
+		if v == "COUNT":
+		    continue
+		elif v == "SUM":		#Calculate SUM clause
+		    sums = sparqlParser.extract_all_sum(query)		 		
+		    for s in sums: #Calc sum by finding the max of the variable
+			#Rewrite query to be able to find suitable sensitivity for given variable.
+			newS = "(MAX" + s[4:] 
+			newQuery = "SELECT " + newS + " " + whereClause
+
+			#Calculate sensitivity
+			newSens = 1.0
+			#print newQuery
+			result = self.endpoint.sendQuery(newQuery)
+			if result == None or len(result) == 0:
+			    print "No sensitivity returned"
+			else:
+			    result = result[0]
+			    for r in result:
+				try:
+				    newSens = float(result[r])
+				except:
+				    print "Error: Sensitivity from SUM is not numeric"
+
+			if newSens > sens:
+			    sens = newSens
+			 #   print "New sens is", newSens
+
+		elif v == "AVG": #Calculate AVG sensitivity
+		    newSens = 1.0
+		    avgs = sparqlParser.extract_all_avg(query)
+		    for a in avgs:
+			print a, "<br> LALALALA<br>"
+			newS = "(COUNT" + a[4:8] + " as ?one) (MIN" + a[4:8] + " as ?minimum)"
+			newQuery = "SELECT " + newS + " " + whereClause
+
+			#Calculate new sensitivity
+			newSens = 1.0
+			#print newQuery
+			result = self.endpoint.sendQuery(newQuery)
+			if result == None or len(result) == 0:
+			    print "No sensitivity returned"
+			else:
+			    result = result[0]
+			    #try:
+		     	    print result
+			    totalSize = result['one']
+			    try:
+				totalSize = float(result['one'])
+				minValue = float(result['minimum'])
+				newSens = totalSize / minValue
+				print "Sens from AVG is", newSens
+			    except:
+				print "Error: Sensitivity from AVG is not numeric"
+			
+			if newSens > sens:
+			    sens = newSens
+			  #  print "New sens is", newSens
+		#Calculate sensitivity on MAX or MIN
+		elif v == "MAX" or v == MIN:
+		    newSens = 1.0
+		    maxes = sparqlParser.extract_all_max(query)
+		    for m in maxes:
+			result = self.endpoint.sendQuery(query)
+			if result == None or len(result) == 0:
+			    print "No Sensitivity Returned on MIN"
+			else:
+			    result = result[0]
+			    for r in result:
+				try:
+				    newSens = float(result[r])
+				except:
+				    print "Error: Sensitivity from MAX is not numeric"
+			if newSens > sens:
+			    sens = newSens
+		    
+	return sens
+
+
      
 #Adds key to dictionary if not there, or increments count of key by one
 def incrementKey(dic, key):
@@ -107,17 +210,36 @@ def incrementKey(dic, key):
     else:
         dic[key] = 1
 
+#Parses the file of endpoint ranges and returns min/max dictionaries with predicate names as keys
+def parse_ranges(endpoint_ranges_file = default_ranges_file):
+	toReturn = {}
+	f = open(endpoint_ranges_file, 'r')	
+	for line in f:
+	    words = line.split()
+	    if len(words) == 0:
+		continue
+	    toReturn[words[0]] = {}
+	    for i in range(len(words)):
+		word = words[i]
+		if word == "pred:max":
+	            toReturn[words[0]][word] = words[i+1]
+		if word == "pred:min":
+		    toReturn[words[0]][word] = words[i+1]
+	return toReturn
+	
+
+
 def main(args = 'user0'):
 
 
-
-    endpoint_test_address = 'http://air.csail.mit.edu:83'
+    endpoint_test_address = 'http://air.csail.mit.edu:81'
     query = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT DISTINCT (COUNT(?p) as ?size) WHERE {
- ?s ?p ?o
-} LIMIT 1000
+SELECT DISTINCT (MAX(?o) as ?size) (AVG(?o) as ?b) WHERE {
+ ?s <http://data-gov.tw.rpi.edu/vocab/p/10040/principal_city_internet_use_anywhere> ?o 
+	FILTER(isNumeric(?o))
+}
 """
     spim = SPIM(endpoint_test_address, '4store')
     pprint(spim.acceptQuery(query, args))
