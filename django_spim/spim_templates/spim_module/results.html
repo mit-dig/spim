@@ -1,0 +1,14 @@
+{% extends "main.html" %}
+
+{% block title %}Spim Online: Results {% endblock %}
+
+{% block results %}
+	<p> The query submitted was: 
+	<br> {{ query }} 
+	<br> <br>
+	With an eps value of: {{ epsValue }} </p>
+
+	<p> The returned result is: <br>
+	{{ spim_result }}
+
+{% endblock %}

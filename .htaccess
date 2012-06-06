@@ -1,0 +1,5 @@
+#AuthType Basic
+#AuthName "Password Required"
+#AuthUserFile /var/passwds/.htpasswd
+#AuthGroupFile /dev/null
+#require user yotam

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<link rel="stylesheet" href="spim_online_style.css" />
+	<title>{% block title %} Spim Online Demo {% endblock %} </title>
+</head>
+
+<body>
+	<div id="Heading">
+	<h1> Spim Online Demo </h1>
+	<p>Please enter in your query in the form below. Don't forget to give the epsilon value you wish to give to expend. A higher epsilon value will yield more accurate results, but allow fewer future queries. </p>
+
+
+	</div>
+
+	<div id="form">
+	<form action='results/' method='post'> {% csrf_token %}
+	{{ form.as_p }}
+	<input type='submit' value-'Submit' />
+	</form>
+	</div>
+
+	<div id="results">
+	{% block results %}
+
+	{% endblock %}
+	</div>
+</body>
+</html>
+
+
+
+

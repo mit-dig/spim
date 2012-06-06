@@ -8,13 +8,12 @@ import endpoint
 from spim import SPIM
 from pprint import pprint
 import string
+import Cookie
 
-hasUser = False
-hasPassword = False
 
 def generate_auth_site():
 	print "<html>\n<head>\n<title>Spim Online Demo </title>\n</head>"
-	print "<body>\n Please input a username and password <br\>"
+	print "<body>\nPlease input a username and password <br\>"
 	print "<form method='post' name='form_auth'>"
 	print """Username: <input type='text' name='username'> <br\>
 	     Password: <input type='text' name='password'> <br\>
@@ -24,7 +23,6 @@ def generate_auth_site():
 	print "</body></html>"
 
 def generate_site(results = ""):
-	print "Hello!"
 	print "<html>\n<head> \n<title>Spim Online Demo </title>\n</head>"
 	print "<body>\n"
 	print "<p>Please enter your desired query here</p>"
@@ -46,39 +44,51 @@ FILTER(isNumeric(?o))
 
 def main():
 
-	print "Content-Type: text/html\n\n"
+	hasUser = False
+	hasPassword = False
 	endpoint_address = "http://air.csail.mit.edu:81"
 	spimThread = SPIM(endpoint_address, '4store', 'lib/endpoint_ranges.n3')
 	form = cgi.FieldStorage()
 
-	#Check for username/password
+	#Check for username/password from form and set them if necessary
 
-	if form.has_key("username") and form.has_key("password"):
-	    	hasUser = True
-	    	hasPassword = True
+#	username = "USERERROR" #this username should be replaced below. If not, error
+#
+#	if form.has_key("username") and form.has_key("password"):
+#		cookie = Cookie.SmartCookie()
+#		cookie['user'] = form['username'].value
+#	    	hasUser = True
+#	    	hasPassword = True
+#		username = form['username'].value
+#		print cookie, "\n\n"
 
-	elif environ.has_key('HTTP_COOKIE'):
-	    	for cookie in string.split(environ['HTTP_COOKIE'], ';'):
-			print cookie
-			print "<br/><br/>"
-#			print string.split(cookie, '=')
-#			print "<br/>"
+
+	#check username/password from cookie
+#	r_cookie = Cookie.SmartCookie(environ.get("HTTP_COOKIE", ""))
+
+	print "Content-Type: text/html\n\n"
+	
+#	if environ.has_key('HTTP_COOKIE'):
+#	    	for cookie in string.split(environ['HTTP_COOKIE'], ';'):
+#			print cookie, "<br/>"
+#			if "|" in cookie:
+#				continue
 #			(key, value) = string.split(cookie, '=')
 #			if key == "UserID":
-#		    		user_id = value
+#		    		username = value
 #		    		hasUser = True
 #
 #			if key == "Password":
 #		    		password = value
 #		    		hasPassword = True
 
-	else:
-	    	generate_auth_site()
-		return
+#	if not (hasUser and hasPassword):
+#	    	generate_auth_site()
+#		return
 
 	generate_site()
 
-	return
+#	return
 	endpoint = "http://air.csail.mit.edu:81"
 
 	#Methods when query is received
