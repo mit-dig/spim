@@ -96,8 +96,13 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    
+    ## OPEN ID MIDDLEWARE ##
+#    'django_openidconsumer.middleware.OpenIDMiddleware',
+
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+   
 )
 
 ROOT_URLCONF = 'spim_django.urls'
@@ -109,8 +114,8 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    '/home/yyyaron/spim/django_spim/spim_templates/spim_module',
-    '/home/yyyaron/spim/django_spim/spim_templates/spim_django',
+    '/home/yyyaron/spim/spim_django/spim_templates/spim_module',
+    '/home/yyyaron/spim/spim_django/spim_templates/spim_django',
 )
 
 INSTALLED_APPS = (
@@ -124,7 +129,8 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'spim_module'
+    'spim_module',
+    'django_openid_auth',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -155,3 +161,22 @@ LOGGING = {
         },
     }
 }
+
+## OPENID EXTRA SETTINGS ##
+
+AUTHENTICATION_BACKENDS = (
+    'django_openid_auth.auth.OpenIDBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+
+OPENID_CREATE_USERS = True
+
+OPENID_UPDATE_DETAILS_FROM_SREG = True
+
+LOGIN_URL = '/openid/login/'
+LOGIN_REDIRECT_URL = '/'
+
+OPENID_SSO_SERVER_URL = 'https://login.launchpad.net/'
+
+

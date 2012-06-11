@@ -1,0 +1,22 @@
+#!/bin/bash
+
+pkill -f '^4s-.*'
+
+4s-backend-setup userProfiles
+
+4s-backend sparqlfed_article
+4s-backend sparqlfed_category
+4s-backend sparqlfed_persondata
+4s-backend sparqlfed_mappingbased_infoboxes
+4s-backend internetData
+4s-backend userProfiles
+echo "Done with backend"
+
+
+4s-httpd -p "82" sparqlfed_article
+4s-httpd -p "83" sparqlfed_category
+4s-httpd -p "84" sparqlfed_persondata
+4s-httpd -p "85" sparqlfed_mappingbased_infoboxes
+4s-httpd -p "81" -s -1 internetData
+4s-httpd -p "86" userProfiles
+echo "Success!"
