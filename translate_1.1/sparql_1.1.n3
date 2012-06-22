@@ -142,9 +142,8 @@ rdf:resourceProduct a rdf:Property;
 	rdfs:label "The equivalence clause of the form (?x as a ?y)";
 	rdfs:domain :var. 
 
-:isNumeric a rdf:Property;
-	rdfs:label "A function that checks if binding is numeric)";
-	rdfs:domain :resource.
+:isNumeric a rdf:Class;
+	rdfs:label "A function that checks if binding is numeric)".
 
 ###
 ### Other functions

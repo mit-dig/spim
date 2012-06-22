@@ -5,7 +5,10 @@
 
 @prefix : <http://air.csail.mit.edu/spim/translation_output.n3>. 
 
-:Query14 a s:SPARQLQuery;
+:Query57 a s:SPARQLQuery;
 	 a s:select_query;
-s:retrieve [
-];
+	s:retrieve [
+		 s:var  :x
+		 s:var  :name
+		 s:var  :y
+	];

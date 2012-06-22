@@ -69,20 +69,26 @@ class ExpressionTreeBuilder:
 		vars = self.initialTree.query_varList_unparsed
 		vars = vars[0].split(':')[1]
 		self.vars = vars.split(',')
-		print vars
+		print vars, ", VARS"
+		self.retrieved_expressions = []
 
 		#Make a clause structure if needed
 		for i in range(len(self.vars)):
 			if '=' in self.vars[i]: #There is a "var1 as var2" clause
 				asASplit = self.vars[i].split('=') 
-				#Ignore the name of the variable returned, since we only care about the variable
-				#originally bound
-				clause = createClause(self.vars[i], '(', ')')
+				
+				#Remember name of the variable, and create a condition clause on the "as a"
+				#clause
+
+				self.vars[i] = Variable(asASplit[0], "variable")	
+				clause = createClause(asASplit[1], '(', ')')
 				print clause
-				self.vars[i] = clause
+				self.retrieved_expressions += [Binding([self.vars[i], clause], "binding")]
+				#self.retrieved_expressions[asASplit[0]] = clause
 			#Else: Variable is returned as-is, so no change.
 			else:
-				self.vars[i] = Pattern([self.vars[i]], "variable") 
+				print "VARNAME", self.vars[i]	
+				self.vars[i] = Variable(self.vars[i], "variable") 
 
 
 	def parsePatternTree(self):
@@ -115,11 +121,14 @@ class ExpressionTreeBuilder:
 		output_file.write("\n\t a s:" + self.query_verb.lower() + "_query;")
 		
 		#Next, we output the variables retrieved.
-		output_file.write("\ns:retrieve [")
-		for s in self.vars:
-			continue
-			output_file.write(s.toN3())	
-		output_file.write("\n];")
+
+		output_file.write("\n\ts:retrieve [")
+		for r in self.vars:
+			output_file.write("\n\t\t s:var " + r.toN3())	
+		output_file.write("\n\t];")
+
+		#Next, make clauses for retrieved variables
+
 						
 	
 ##########################################
@@ -128,6 +137,8 @@ class ExpressionTreeBuilder:
 #queries are not too large this should not be too much of a problem.
 
 def createClause(string, left_brace = '{', right_brace = '}'):	
+
+#	print "STRING, ", string
 
 	counter_string = 0
 	length = len(string)
@@ -166,11 +177,10 @@ def createClause(string, left_brace = '{', right_brace = '}'):
 	#Find keyword of the expression (e.g. basic_graph_pattern), which will be the token
 	keyword = string[0:counter_string]
 	keyword = keyword.replace(' ', '')
-	dprint("KEYWORD = " + keyword)
 	if keyword == "triple":
 		vars = string[(counter_string+1):].split(',')
-		all_clauses = [createClause(s, '(', ')') for s in vars]
-		return Pattern(all_clauses, "triple")	
+		three_vars = [createClause(s, '(', ')') for s in vars]
+		return Triple(three_vars, "triple")	
 
 	#Take care of expression clauses by parsing using parantheses
 	elif keyword == "expr":
@@ -178,7 +188,7 @@ def createClause(string, left_brace = '{', right_brace = '}'):
 
 	#Take care of variables and literals
 	elif keyword == "variable" or keyword == "string" or keyword == "integer" or keyword == "float":
-		return Variable([string[counter_string:]], keyword)
+		return Variable(string[counter_string:], keyword)
 
 	#Need to make a clause out of every sub-expression enclosed in curly bracers.
 	#The invariant: We always have one left curly open. When we have zero open, then we have finished the 
@@ -245,7 +255,8 @@ class Clause:
 		self.token = "Virtual"
 		self.nested_clauses = []
 
-	def toN3(self):
+	#Depth is used to make the tab characters
+	def toN3(self, depth = 0):
 		pass
 
 	def __str__(self):
@@ -254,6 +265,11 @@ class Clause:
 			toPrint += str(i)
 		toPrint = toPrint + ' ] '
 		return toPrint
+
+	def sub_var_clauses(self):
+		pass	
+
+
 ########################################
 #To avoid null problems
 class EmptyClause(Clause):
@@ -261,15 +277,17 @@ class EmptyClause(Clause):
 	def __init__(self):
 		self.token = "Empty"
 
-	def toN3(self):
+	def toN3(self, depth = 0):
 		print "Error! This clause identifies an error in the parsing. Make sure code is correct"
 		raise Exception("Error! This clause identifies an error in the parsing. Make sure the code is correct")
 
+	def sub_var_clauses(self):
+		return None
 
 ########################################
 class Pattern(Clause):
 	
-	#A clause. The types of tokens supported: unknown, basic_graph_pattern, sub_graph_pattern, 
+	#A general clause. The types of tokens supported: unknown, basic_graph_pattern, sub_graph_pattern, 
 	#filter, op_(OP NAME IN LOWERCASE), triples_clause, expression, triple, variable, string_literal, etc.
  	#Note that for the purposes of simplicity, variables and literals are also treated as clause objects. The 
 	#name of these will be put in the nested_clauses subvariable (e.g. self.nested_clauses = ['x']).
@@ -277,20 +295,73 @@ class Pattern(Clause):
 		self.nested_clauses = nested_clauses
 		self.token = token
 
-	def toN3(self):
-		return "\ns:" + token
+	def toN3(self, depth = 0):
+		
+		if self.token == "triple":
+			return "Triple"
+		if self.token != '':
+			toReturn = "\n" + '\t'*depth + "s:" + self.token + " ["
+		else:
+			toReturn = ''
+		for s in self.nested_clauses:
+			toReturn += s.toN3(depth + 1)
+		if self.token != '':
+			toReturn += '\t'*depth + '\n];'
+		return toReturn
 	
+	def sub_var_clauses(self):
+		toReturn = []
+		for s in self.nested_clauses:
+			toReturn += s.sub_var_clauses()
+		return toReturn
+
 #########################################
 
 class Variable(Clause):
 	#Inherets from clause for convinience. Encompasses both literals and variables
 	
 	#For convinience, varname (also the literal name must be in list form (e.g. ["'Charlie'"] or ['x'])
+	#Also, token is just 
 	def __init__(self, varName, token):
-		self.nested_clauses = varName #Called nested_clauses to match the clause class only.
+		newVar = varName.replace(" ", "")
+		newVar = newVar.replace("(", "")
+		newVar = newVar.replace(")", "")
+		self.nested_clauses = [newVar] #Called nested_clauses to match the clause class only.
 		self.token = token
 
+	def toN3(self, depth = 0):
+		return " :" + self.nested_clauses[0]  
 
+	def sub_var_clauses(self):
+		return [self]
+
+##########################################
+
+class Triple(Clause):
+	
+	def __init__(self, triple_of_vars, token):
+		self.nested_clauses = triple_of_vars
+		self.token = token
+
+	def toN3(self, depth = 0):
+		toReturn = '\t'*depth
+		for var in self.nested_clauses:
+			toReturn += var.toN3() + " "
+		return toReturn + ".\n"
+
+##########################################
+
+class Binding(Clause):
+		
+	def __init__(self, two_clauses, token):
+		self.nested_clauses = two_clauses
+		self.token = token
+
+	def toN3(self, depth=0):
+		toReturn = '\t'*depth
+		toReturn += self.nested_clauses[0] + " s:bound_as " + self.nested_clauses[1] + ".\n"		
+
+##########################################
 def translate(query):
 	##Part 1: Send sparql query through roqet
 	command = "roqet -i sparql -d structure -n -e " + query
