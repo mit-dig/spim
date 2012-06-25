@@ -70,7 +70,7 @@ class ExpressionTreeBuilder:
 		vars = vars[0].split(':')[1]
 		self.vars = vars.split(',')
 		print vars, ", VARS"
-		self.retrieved_expressions = []
+		retrieved_expressions = []
 
 		#Make a clause structure if needed
 		for i in range(len(self.vars)):
@@ -83,13 +83,15 @@ class ExpressionTreeBuilder:
 				self.vars[i] = Variable(asASplit[0], "variable")	
 				clause = createClause(asASplit[1], '(', ')')
 				print clause
-				self.retrieved_expressions += [Binding([self.vars[i], clause], "binding")]
+				retrieved_expressions += [Binding([self.vars[i], clause], "binding")]
 				#self.retrieved_expressions[asASplit[0]] = clause
 			#Else: Variable is returned as-is, so no change.
 			else:
 				print "VARNAME", self.vars[i]	
 				self.vars[i] = Variable(self.vars[i], "variable") 
 
+		#Finally, make the retrieved expression a single clause object
+		self.retrieved_expressions = Pattern(retrieved_expressions, "retrieved_expressions")
 
 	def parsePatternTree(self):
 		print self.initialTree.query_patterns_unparsed
@@ -129,7 +131,14 @@ class ExpressionTreeBuilder:
 
 		#Next, make clauses for retrieved variables
 
-						
+#		output_file.write("\n\ts:clause [")
+
+		#First, go through the clauses from the retrieve section
+#		for c in self.retrieved_expressions:
+#			output_file.write(c.toN3(2))						
+		output_file.write(self.retrieved_expressions.toN3(1))
+		#Now go through the other clauses
+		output_file.write(self.graph_patterns.toN3(2))
 	
 ##########################################
 #Quite stupid. Scan string looking for curly bracers, until you find one. Then scan the rest of the screen to find
@@ -165,7 +174,7 @@ def createClause(string, left_brace = '{', right_brace = '}'):
 			return EmptyClause()
 		elif left_brace == '(' and right_brace ==')':
 			dprint("Reached name or literal!")
-			return string
+			return Variable(string, "string")
 
 		#Do this now with parantheses instead of bracers
 		return createClause(string, '(', ')')
@@ -177,6 +186,11 @@ def createClause(string, left_brace = '{', right_brace = '}'):
 	#Find keyword of the expression (e.g. basic_graph_pattern), which will be the token
 	keyword = string[0:counter_string]
 	keyword = keyword.replace(' ', '')
+
+#	if keyword == '':
+#		print "BLANK", counter_string
+#		return createClause(string[counter_string:])
+
 	if keyword == "triple":
 		vars = string[(counter_string+1):].split(',')
 		three_vars = [createClause(s, '(', ')') for s in vars]
@@ -291,22 +305,31 @@ class Pattern(Clause):
 	#filter, op_(OP NAME IN LOWERCASE), triples_clause, expression, triple, variable, string_literal, etc.
  	#Note that for the purposes of simplicity, variables and literals are also treated as clause objects. The 
 	#name of these will be put in the nested_clauses subvariable (e.g. self.nested_clauses = ['x']).
+
 	def __init__(self, nested_clauses, token = "Unknown"):
 		self.nested_clauses = nested_clauses
 		self.token = token
 
 	def toN3(self, depth = 0):
-		
-		if self.token == "triple":
-			return "Triple"
+
+		print "TOKEN IS", self.token, " AND ", self.nested_clauses
+
+		#Deal with blanks first
+		if self.token == '':
+			toReturn = ''
+			for s in self.nested_clauses:
+				toReturn += s.toN3(depth)
+			return toReturn 
 		if self.token != '':
-			toReturn = "\n" + '\t'*depth + "s:" + self.token + " ["
+			toReturn = "\n" + '\t'*depth + "[ s:" + self.token
 		else:
 			toReturn = ''
-		for s in self.nested_clauses:
-			toReturn += s.toN3(depth + 1)
-		if self.token != '':
-			toReturn += '\t'*depth + '\n];'
+		for i in range(len(self.nested_clauses)):
+			toReturn += self.nested_clauses[i].toN3(depth + 1)
+			if i == len(self.nested_clauses) - 1:
+				toReturn += '\n' + '\t'*(depth) + '].'
+			else:
+				toReturn += '];'
 		return toReturn
 	
 	def sub_var_clauses(self):
@@ -344,6 +367,7 @@ class Triple(Clause):
 		self.token = token
 
 	def toN3(self, depth = 0):
+		print "TRIPLE", self.nested_clauses
 		toReturn = '\t'*depth
 		for var in self.nested_clauses:
 			toReturn += var.toN3() + " "
@@ -358,10 +382,22 @@ class Binding(Clause):
 		self.token = token
 
 	def toN3(self, depth=0):
-		toReturn = '\t'*depth
-		toReturn += self.nested_clauses[0] + " s:bound_as " + self.nested_clauses[1] + ".\n"		
+		toReturn = '\n' + '\t'*depth
+		toReturn += self.nested_clauses[0].toN3(depth+1) + " s:bound_as " + self.nested_clauses[1].toN3(depth + 1) + "\n"		
+		return toReturn #+ '.\n'
+##########################################
+
+class Expression(Clause):
+
+	def __init__(self, nested_clauses, token = "Expression"):
+		self.nested_clauses = nested_clauses
+		self.token = token
+
+	def toN3(self, depth = 0):
+		toReturn = '\n' + '\t'*depth + " s:expression"
 
 ##########################################
+
 def translate(query):
 	##Part 1: Send sparql query through roqet
 	command = "roqet -i sparql -d structure -n -e " + query

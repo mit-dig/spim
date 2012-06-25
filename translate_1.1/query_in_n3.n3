@@ -5,10 +5,58 @@
 
 @prefix : <http://air.csail.mit.edu/spim/translation_output.n3>. 
 
-:Query57 a s:SPARQLQuery;
+:Query32 a s:SPARQLQuery;
 	 a s:select_query;
 	s:retrieve [
 		 s:var  :x
 		 s:var  :name
 		 s:var  :y
 	];
+	[ s:retrieved_expressions
+		 :name s:bound_as 
+			[ s:expr :b
+			].
+];
+		 :y s:bound_as 
+			[ s:expr
+				[ s:opavg
+					[ s:expr :x
+					].
+				].
+			].
+
+	].
+		[ s:queryGroupgraphpattern[0]
+			[ s:sub-graphpatterns(3)
+				[ s:Basicgraphpattern[1]#0
+					[ s:triples
+						[ s:triple#0							 :a  :uri<http://xmlns.com/foaf/0.1/age>  :x .
+];							 :a  :uri<http://xmlns.com/foaf/0.1/name>  :b .
+];							 :a  :uri<http://example.com#hasFriend> 
+[ s:anon-variable :bnodeid1
+]. .
+];							
+[ s:anon-variable :bnodeid1
+].  :uri<http://xmlns.com/foaf/0.1/name>  :name=exprvariableb .
+
+						].
+					].];
+					[ s:filter
+						[ s:expr
+							[ s:opisnumeric
+								[ s:expr :x
+								].
+							].
+						].
+					].];
+					[ s:filter
+						[ s:expr
+							[ s:opgt
+								[ s:expr :x :"10"
+								].
+							].
+						].
+					].
+				].
+			].
+		].
