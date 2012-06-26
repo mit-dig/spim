@@ -123,31 +123,38 @@ rdf:resourceProduct a rdf:Property;
 ### Added for Sparql 1.1
 ###
 
-:count a rdf:Class;
+:op_count a rdf:Class;
 	rdfs:label "The count operator, COUNT".
 
-:sum a rdf:Class;
+:op_sum a rdf:Class;
 	rdfs:label "The sum operator, SUM".
 
-:avg a rdf:Class;
+:op_avg a rdf:Class;
 	rdfs:label "The average operator, AVG".
 
-:min a rdf:Class;
+:op_min a rdf:Class;
 	rdfs:label "The minimum operator, MIN".
 
-:max a rdf:Class;
+:op_max a rdf:Class;
 	rdfs:label "The maximum operator, MAX".
 
-:retrievedAs a rdf:Property;
+:bound_as a rdf:Property;
 	rdfs:label "The equivalence clause of the form (?x as a ?y)";
 	rdfs:domain :var. 
 
-:isNumeric a rdf:Class;
-	rdfs:label "A function that checks if binding is numeric)".
+:op_isNumeric a rdf:Class;
+	rdfs:label "A function that checks if binding is of numeric value".
 
 ###
 ### Other functions
 ###
+
+:filter a rdf:Property;
+	rdfs:label "Identifies a filter clause".
+
+:extra_desc a rdf:Property;
+	rdfs:label "Identifies extra aspects of the query that were not explicitly put into n3 format";
+	rdfs:range rdf:string.
 
 :GroupBy a rdf:Property;
 	rdfs:label "Identifies the groupby construct"

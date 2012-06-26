@@ -142,7 +142,17 @@ class ExpressionTreeBuilder:
 	
 		#Now go through the other clauses
 		output_file.write(self.graph_patterns.toN3(2))
+
+		#Last part: print out the "other" clauses, which were not actually parsed. E.g. "this query
+		#asks for distinct results"
+		
+		for extra in self.initialTree.other_unparsed:
+			output_file.write('\t\ts:extra_desc "' + extra + '";\n')
+
 		output_file.write("\t];")
+
+		print self.initialTree.other_unparsed
+		
 
 	
 ##########################################
@@ -505,7 +515,16 @@ def main():
 	sample_query = """'
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 SELECT DISTINCT ?x (?b as ?name) (AVG(?x) as ?y) 
-WHERE{ ?a foaf:age ?x; foaf:name ?b; <http://example.com#hasFriend> [ foaf:name ?friend_name]. FILTER(isNumeric(?x)) FILTER(?x > "10").} GROUP BY ?x' """
+WHERE{ 
+	?a foaf:age ?x; 
+	   foaf:name ?b; 
+           <http://example.com#hasFriend> 
+		[ foaf:name ?friend_name]. 
+	OPTIONAL {?a foaf:ssn ?k}.
+
+FILTER(isNumeric(?x)) 
+FILTER(?x > "10").
+} GROUP BY ?x' """
 	translate(sample_query)
 
 if __name__ == "__main__":

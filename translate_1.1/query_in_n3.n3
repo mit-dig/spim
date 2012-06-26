@@ -5,7 +5,7 @@
 
 @prefix : <http://air.csail.mit.edu/spim/translation_output.n3>. 
 
-:Query100 a s:SPARQLQuery;
+:Query104 a s:SPARQLQuery;
 	 a s:select_query;
 	s:retrieve [
 		 s:var  :x;
@@ -19,6 +19,8 @@
 		s:triplePattern {  :a uri<http://xmlns.com/foaf/0.1/name>  :b };
 		s:triplePattern {  :a uri<http://example.com#hasFriend> bnodeid1 };
 		s:triplePattern { bnodeid1 uri<http://xmlns.com/foaf/0.1/name>  :friend_name };
+		s:triplePattern {  :a uri<http://xmlns.com/foaf/0.1/ssn>  :k };
 		s:filter  [ s:op_isnumeric  :x];
 		s:filter { :x s:op_gt "10"};
+		s:extra_desc "query asks for distinct results";
 	];
