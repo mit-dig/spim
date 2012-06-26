@@ -5,6 +5,7 @@
 
 import os
 import subprocess
+import re
 
 #Set here to have a trace printed
 debug = False
@@ -126,19 +127,23 @@ class ExpressionTreeBuilder:
 
 		output_file.write("\n\ts:retrieve [")
 		for r in self.vars:
-			output_file.write("\n\t\t s:var " + r.toN3())	
+			output_file.write("\n\t\t s:var " + r.toN3() + ';')	
 		output_file.write("\n\t];")
 
 		#Next, make clauses for retrieved variables
 
-#		output_file.write("\n\ts:clause [")
+		output_file.write("\n\ts:clause [")
 
 		#First, go through the clauses from the retrieve section
-#		for c in self.retrieved_expressions:
-#			output_file.write(c.toN3(2))						
-		output_file.write(self.retrieved_expressions.toN3(1))
+		for c in self.retrieved_expressions.nested_clauses:
+			output_file.write(c.toN3(2))						
+#		output_file.write(self.retrieved_expressions.toN3(1))
+		output_file.write('\n')	
+	
 		#Now go through the other clauses
 		output_file.write(self.graph_patterns.toN3(2))
+		output_file.write("\t];")
+
 	
 ##########################################
 #Quite stupid. Scan string looking for curly bracers, until you find one. Then scan the rest of the screen to find
@@ -185,7 +190,22 @@ def createClause(string, left_brace = '{', right_brace = '}'):
 
 	#Find keyword of the expression (e.g. basic_graph_pattern), which will be the token
 	keyword = string[0:counter_string]
+
+	#Look for op keywords before doing regex processing
+	matching = re.match('op [\w]+', keyword)
+	if matching != None:
+		print keyword, "IS IT OP?"
+		a, b = counter_string + 1, len(string) - 1 #These indices help get rid of extra parantheses
+		newString = string[a:b]
+		print newString
+		separated = newString.split(',')
+		return Operation([createClause(s, '(', ')') for s in separated], keyword.replace(' ', '_'))
+
+	#Some regex processing to make keyword better
+
+
 	keyword = keyword.replace(' ', '')
+#	keyword = re.sub("[^\w]\d+[\w]*", '', keyword)
 
 #	if keyword == '':
 #		print "BLANK", counter_string
@@ -203,6 +223,9 @@ def createClause(string, left_brace = '{', right_brace = '}'):
 	#Take care of variables and literals
 	elif keyword == "variable" or keyword == "string" or keyword == "integer" or keyword == "float":
 		return Variable(string[counter_string:], keyword)
+
+	elif keyword == "filter":
+		return Filter([createClause(string[counter_string:])], 'filter')	
 
 	#Need to make a clause out of every sub-expression enclosed in curly bracers.
 	#The invariant: We always have one left curly open. When we have zero open, then we have finished the 
@@ -310,26 +333,42 @@ class Pattern(Clause):
 		self.nested_clauses = nested_clauses
 		self.token = token
 
+	#This version, skip the pattern keyword and just go down to where there is a triple pattern
 	def toN3(self, depth = 0):
+		toReturn = ''
+
+		#Special case: Operations will be slightly more difficult
+#		if self.keyword == "op":
+			
+
+		for s in self.nested_clauses:
+			toReturn += s.toN3(depth)
+		return toReturn
+
+	#Function not in use anymore
+	def toN3_old(self, depth = 0):
 
 		print "TOKEN IS", self.token, " AND ", self.nested_clauses
-
+		newStr = "__" + self.token + "__"
+		print newStr
 		#Deal with blanks first
 		if self.token == '':
 			toReturn = ''
 			for s in self.nested_clauses:
 				toReturn += s.toN3(depth)
 			return toReturn 
+		
 		if self.token != '':
 			toReturn = "\n" + '\t'*depth + "[ s:" + self.token
 		else:
 			toReturn = ''
+		#toReturn += '[ '
 		for i in range(len(self.nested_clauses)):
 			toReturn += self.nested_clauses[i].toN3(depth + 1)
 			if i == len(self.nested_clauses) - 1:
 				toReturn += '\n' + '\t'*(depth) + '].'
 			else:
-				toReturn += '];'
+				toReturn += '\n' + '\t'*(depth) + '];'
 		return toReturn
 	
 	def sub_var_clauses(self):
@@ -337,6 +376,53 @@ class Pattern(Clause):
 		for s in self.nested_clauses:
 			toReturn += s.sub_var_clauses()
 		return toReturn
+
+########################################
+class Filter(Clause):
+
+	def __init__(self, nested_clauses, token):
+		self.nested_clauses = nested_clauses
+		self.token = token
+
+	#Slightly hacked by looking into next clause in series. Fix if possible
+	def toN3(self, depth = 0):
+		if len(self.nested_clauses) > 1:
+			print "LONGER LENGTH, ", len(self.nested_clauses)
+		subclause = self.nested_clauses[0]
+		if subclause.token[0:1] == 'op':
+			print subclause.token, "SUBCLAUSE"
+
+		toReturn = ''
+		toReturn = '\t'*depth + "s:filter "
+		for c in self.nested_clauses:
+			toReturn += c.toN3() + ';\n'	
+		return toReturn
+
+########################################
+#Right now, operation objects only handle functions of one or two input variables
+class Operation(Clause):
+
+	def __init__(self, nested_clauses, token):
+		self.nested_clauses = nested_clauses
+		self.token = token
+
+	def toN3(self, depth = 0):
+		print "OP", self.token, len(self.nested_clauses)
+		print self.nested_clauses
+		toReturn = ''
+		if len(self.nested_clauses) == 2:
+			toReturn += '\t'*depth + '{'
+			toReturn += self.nested_clauses[0].toN3() + " s:" + self.token + " "
+			toReturn += self.nested_clauses[1].toN3() + '}'
+	
+		elif len(self.nested_clauses) == 1:
+			toReturn += ' [ s:' + self.token + ' ' + self.nested_clauses[0].toN3() + ']' 
+		else:
+			toReturn = " CANNOT HANDLE THIS MANY INPUT VARS FOR THIS OP"
+		
+		return toReturn
+		
+
 
 #########################################
 
@@ -353,7 +439,12 @@ class Variable(Clause):
 		self.token = token
 
 	def toN3(self, depth = 0):
-		return " :" + self.nested_clauses[0]  
+		print "VARIABLE TOKEN IS,", self.token
+		if self.token == "variable":
+			return " :" + self.nested_clauses[0]  
+		else:
+			return self.nested_clauses[0]
+
 
 	def sub_var_clauses(self):
 		return [self]
@@ -368,10 +459,10 @@ class Triple(Clause):
 
 	def toN3(self, depth = 0):
 		print "TRIPLE", self.nested_clauses
-		toReturn = '\t'*depth
+		toReturn = '\t'*depth + "s:triplePattern { "
 		for var in self.nested_clauses:
 			toReturn += var.toN3() + " "
-		return toReturn + ".\n"
+		return toReturn + "};\n"
 
 ##########################################
 
@@ -382,8 +473,8 @@ class Binding(Clause):
 		self.token = token
 
 	def toN3(self, depth=0):
-		toReturn = '\n' + '\t'*depth
-		toReturn += self.nested_clauses[0].toN3(depth+1) + " s:bound_as " + self.nested_clauses[1].toN3(depth + 1) + "\n"		
+		toReturn = '\n' + '\t'*depth + 's:triplePattern { '
+		toReturn += self.nested_clauses[0].toN3(depth+1) + " s:bound_as " + self.nested_clauses[1].toN3(depth + 1) + "};"		
 		return toReturn #+ '.\n'
 ##########################################
 
@@ -414,7 +505,7 @@ def main():
 	sample_query = """'
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 SELECT DISTINCT ?x (?b as ?name) (AVG(?x) as ?y) 
-WHERE{ ?a foaf:age ?x; foaf:name ?b; <http://example.com#hasFriend> [ foaf:name ?name]. FILTER(isNumeric(?x)) FILTER(?x > "10").} GROUP BY ?x' """
+WHERE{ ?a foaf:age ?x; foaf:name ?b; <http://example.com#hasFriend> [ foaf:name ?friend_name]. FILTER(isNumeric(?x)) FILTER(?x > "10").} GROUP BY ?x' """
 	translate(sample_query)
 
 if __name__ == "__main__":
