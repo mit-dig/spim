@@ -10,10 +10,13 @@ from userManager import UserManager, UserProfile
 import re
 import sparqlParser
 import sys
+from sparql1_1toN3 import translate_query_to_n3
 
 sys.path.append("air-reasoner/")
 sys.path.append("../air-policies/")
 sys.path.append("../")
+
+
 
 
 #SPARQL endpoint. Change address here. TODO make it melleable. 
@@ -26,6 +29,8 @@ user_graph_name_base = "<http://air.csail.mit.edu/Users/"
 #endpoint min/max ranges file
 default_ranges_file = "endpoint_ranges.n3"
 
+#default location for output of query to n3 translation
+default_sparql2n3_output_location = "/var/www/spim_ontologies/query_in_n3.n3"
 
 #Information for policyrunner
 
@@ -40,6 +45,7 @@ class SPIM:
 	self.endpoint_ranges = parse_ranges(ranges_file) 
 
     def acceptQuery(self, query, username, eps = 1.0):
+
 
 	#Part 1: Create user profile if it doesn't exist in triplesotre	
 	userURI = user_graph_name_base + username + '/' + username + '>'
@@ -62,7 +68,11 @@ class SPIM:
 
 	user_result = self.userList.sendQuery(query_for_epsValue)
 	
-	#Part 2: 
+	#Part 2: Check the query using policy runner
+	print query
+	translate_query_to_n3(query, default_sparql2n3_output_location)
+	
+
 	#Part 3: Create object to manage differential privacy
 
 	#TODO Cache users
@@ -86,12 +96,11 @@ class SPIM:
 	query_sensitivity_all = self.calc_func_sensitivity(whereClause, allVariables, query)
 	query_sensitivity = query_sensitivity_all
 #	print query_sensitivity_all
-#	print "DSLFJS"
 
 	#Send query 
 
 	result = self.endpoint.sendQuery(query)
-#	print result
+	print result
 	for t in result: #Iterate over terms from query
 	    for tag in allVariables:
 		tagVars = allVariables[tag]
@@ -155,7 +164,6 @@ class SPIM:
 		    newSens = 1.0
 		    avgs = sparqlParser.extract_all_avg(query)
 		    for a in avgs:
-			print a, "<br> LALALALA<br>"
 			newS = "(COUNT" + a[4:8] + " as ?one) (MIN" + a[4:8] + " as ?minimum)"
 			newQuery = "SELECT " + newS + " " + whereClause
 
@@ -239,8 +247,8 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT DISTINCT (MAX(?o) as ?size) (AVG(?o) as ?b) WHERE {
  ?s <http://data-gov.tw.rpi.edu/vocab/p/10040/principal_city_internet_use_anywhere> ?o 
 	FILTER(isNumeric(?o))
-}
-"""
+}"""
+    print query
     spim = SPIM(endpoint_test_address, '4store')
     pprint(spim.acceptQuery(query, args))
 

@@ -1,0 +1,178 @@
+# $Date: 2009-08-18 08:27:39 -0400 (Tue, 18 Aug 2009) $
+# $Revision: 27101 $
+# $Author: jsoltren $
+
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+@prefix : <http://dig.csail.mit.edu/2009/IARPA-PIR/sparql#> .
+
+# abstract ontology to express subset of SPARQL queries
+
+<> rdfs:comment "abstract ontology to express subset of SPARQL queries".
+
+#example sparql query
+#PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+#PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+#PREFIX example: <http://example.org/>
+#SELECT * WHERE {
+#  ?s example:age ?a.
+#  ?s foaf:openid ?id.
+#  OPTIONAL { ?s example:ssn ?n }.
+#  FILTER ( ?a > 18 )
+#}
+# translated to
+#@prefix s: <http://dig.csail.mit.edu/2009/IARPA-PIR/abstract-sparql#> .
+#
+#:Query-1052391960 a s:SPARQLQuery;
+#   s:retrieve [ s:var :id; s:var :n; s:var :s; s:var :a ];
+#   s:clause [
+#      s:triplePattern  { :s <http://example.org/age> :a };
+#      s:triplePattern  { :s <http://xmlns.com/foaf/0.1/openid> :id };
+#      s:triplePattern  { :s <http://example.org/ssn> :n };
+#      s:triplePattern  { :a s:booleanGT "18 "}
+#    ].
+
+:SPARQLQuery a rdfs:Class;
+	rdfs:label "Abstract class of SPARQL queries.".
+
+:source a rdf:Property;
+    rdfs:label "URIs from which a query may pull data.";
+    rdfs:domain :SPARQLQuery;
+
+:retrieve a rdf:Property;
+    rdfs:label "Values retrieved by a query.";
+    rdfs:domain :SPARQLQuery;
+    rdfs:range :RetrievedVar.
+
+:RetrievedVar a rdfs:Class;
+    rdfs:label "Class consisting of retrieved variables.".
+
+:var a rdf:Property;
+    rdfs:label "Values retrieved by a query.";
+    rdfs:domain :RetrievedVar.
+
+:clause a rdf:Property;
+    rdfs:label "Conditions or where clause associated with the query.";
+    rdfs:domain :SPARQLQuery;
+	rdf:range :Clause.
+
+:Clause a rdfs:Class;
+	rdfs:label "Class consisting of triple patterns.".
+
+:triplePattern a rdf:Property;
+	rdfs:label "A triple pattern for each condition/where.";
+	rdfs:domain :Clause.
+	
+# These are arithmetic and Boolean operators that the translation recognizes.
+
+rdf:resourceNegation a rdf:Property;
+    rdfs:label "Negative of a number, -.";
+    rdfs:domain rdf:resource.
+
+rdf:resourceInverse a rdf:Property;
+    rdfs:label "Inverse of a number, /.";
+    rdfs:domain rdf:resource.
+
+rdf:resourceSum a rdf:Property;
+    rdfs:label "Sum of two numbers, +.";
+    rdfs:domain rdf:resource.
+
+rdf:resourceProduct a rdf:Property;
+    rdfs:label "Multiplication of two numbers, *.";
+    rdfs:domain rdf:resource.
+
+:booleanNOT a rdf:Property;
+    rdfs:label "The Boolean NOT operator, ! or ~.";
+    rdfs:domain rdf:resource.
+
+:booleanAND a rdf:Property;
+    rdfs:label "The Boolean AND operator, &&.";
+    rdfs:domain rdf:resource.
+
+:booleanOR a rdf:Property;
+    rdfs:label "The Boolean OR operator, ||.";
+    rdfs:domain rdf:resource.
+
+:booleanEQ a rdf:Property;
+    rdfs:label "An equal to relationship, =.";
+    rdfs:domain rdf:resource.
+
+:booleanNE a rdf:Property;
+    rdfs:label "A not equal to relationship, !=.";
+    rdfs:domain rdf:resource.
+
+:booleanLT a rdf:Property;
+    rdfs:label "A less than relationship, <.";
+    rdfs:domain rdf:resource.
+
+:booleanGT a rdf:Property;
+    rdfs:label "A greater than relationship, >.";
+    rdfs:domain rdf:resource.
+
+:booleanLE a rdf:Property;
+    rdfs:label "A less than or equal to relationship, <=.";
+    rdfs:domain rdf:resource.
+
+:booleanGE a rdf:Property;
+    rdfs:label "A greater than or equal to relationship, >=.";
+    rdfs:domain rdf:resource.
+
+###
+### Added for Sparql 1.1
+###
+
+:op_count a rdf:Class;
+	rdfs:label "The count operator, COUNT".
+
+:op_sum a rdf:Class;
+	rdfs:label "The sum operator, SUM".
+
+:op_avg a rdf:Class;
+	rdfs:label "The average operator, AVG".
+
+:op_min a rdf:Class;
+	rdfs:label "The minimum operator, MIN".
+
+:op_max a rdf:Class;
+	rdfs:label "The maximum operator, MAX".
+
+:bound_as a rdf:Property;
+	rdfs:label "The equivalence clause of the form (?x as a ?y)";
+	rdfs:domain :var. 
+
+:op_isNumeric a rdf:Class;
+	rdfs:label "A function that checks if binding is of numeric value".
+
+###
+### Other functions
+###
+
+:filter a rdf:Property;
+	rdfs:label "Identifies a filter clause".
+
+:extra_desc a rdf:Property;
+	rdfs:label "Identifies extra aspects of the query that were not explicitly put into n3 format";
+	rdfs:range rdf:string.
+
+:GroupBy a rdf:Property;
+	rdfs:label "Identifies the groupby construct"
+	rdfs:range :var.
+
+:extra_property a rdf:Property;
+	rdfs:label "Identifies a construct that has not been fully implemented yet"i.
+
+:has_patterns a rdf:Property;
+	rdfs:label "Identifies sub-clauses in where clause";
+	rdfs:domain :SPARQLQuery.
+
+:select_query a rdf:Class;
+	rdfs:label "Identifies a select query".
+
+:construct_query a rdf:Class;
+	rdfs:label "Identifies a construct query".
+
+
+
+#ends
