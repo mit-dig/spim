@@ -23,7 +23,7 @@ default_output_file = "output_in_n3.n3"
 header = """@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix s: <http://air.csail.mit.edu/spim/sparql_1.1.n3>.
+@prefix s: <http://air.csail.mit.edu/spim_ontologies/sparql2n3_ontology.n3>.
 
 @prefix : <http://air.csail.mit.edu/spim/translation_output.n3>. """
 
@@ -53,7 +53,7 @@ class ExpressionTreeBuilder:
 		print splitQuery
 		print "########################"
 		for i in range(len(splitQuery)):
-			if 'query Group graph pattern' in splitQuery[i]:
+			if 'query Group graph pattern' in splitQuery[i] or 'query Basic graph pattern' in splitQuery[i]:
 				clauseTree.query_patterns_unparsed += [splitQuery[i:]]
 				break
 			elif 'query bound variables' in splitQuery[i]:
@@ -104,13 +104,15 @@ class ExpressionTreeBuilder:
 		self.retrieved_expressions = Pattern(retrieved_expressions, "retrieved_expressions")
 
 	def parsePatternTree(self):
+		print "***********************************"
 		print self.initialTree.query_patterns_unparsed
+		fullPattern = ''
 		for main_graph_pattern in self.initialTree.query_patterns_unparsed:
-			fullPattern = ''
 			for string in main_graph_pattern:
 				fullPattern += string
 			print "############################"
-			print fullPattern
+
+		print fullPattern
 
 		self.graph_patterns = createClause(fullPattern)
 		print self.graph_patterns
@@ -146,7 +148,6 @@ class ExpressionTreeBuilder:
 		#First, go through the clauses from the retrieve section
 		for c in self.retrieved_expressions.nested_clauses:
 			output_file.write(c.toN3(2))						
-#		output_file.write(self.retrieved_expressions.toN3(1))
 		output_file.write('\n')	
 	
 		#Now go through the other clauses
@@ -158,7 +159,7 @@ class ExpressionTreeBuilder:
 		for extra in self.initialTree.other_unparsed:
 			output_file.write('\t\ts:extra_desc "' + extra + '";\n')
 
-		output_file.write("\t];")
+		output_file.write("\t].")
 
 		print self.initialTree.other_unparsed
 		
@@ -240,6 +241,9 @@ def createClause(string, left_brace = '{', right_brace = '}'):
 	#Take care of variables and literals
 	elif keyword == "variable" or keyword == "string" or keyword == "integer" or keyword == "float":
 		return Variable(string[counter_string:], keyword)
+
+	elif keyword == "anon-variable":
+		return Variable(string[counter_string:], "variable")
 
 	elif keyword == "filter":
 		return Filter([createClause(string[counter_string:])], 'filter')	
@@ -460,7 +464,10 @@ class Variable(Clause):
 		if self.token == "variable":
 			return " :" + self.nested_clauses[0]  
 		else:
-			return self.nested_clauses[0]
+			toReturn = self.nested_clauses[0]
+			if toReturn[0:3] == "uri": #We have a uri, so edit it out
+				return toReturn[3:]
+			return toReturn
 
 
 	def sub_var_clauses(self):
@@ -522,19 +529,28 @@ def translate_query_to_n3(query, outputFilename = "query_in_n3.n3"):
 	builder.translateSparqlToN3(output)
 
 def main():
-	sample_query = """
-PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-SELECT DISTINCT ?x (?b as ?name) (AVG(?x) as ?y) 
-WHERE{ 
-	?a foaf:age ?x; 
-	   foaf:name ?b; 
-           <http://example.com#hasFriend> 
-		[ foaf:name ?friend_name]. 
-	OPTIONAL {?a foaf:ssn ?k}.
 
-FILTER(isNumeric(?x)) 
-FILTER(?x > "10").
-} GROUP BY ?x """
+	sample_query = """
+PREFIX webOntology: <http://data-gov.tw.rpi.edu/vocab/p/10040#>
+SELECT DISTINCT ?a (AVG(?x) as ?y)
+WHERE{
+	?a webOntology:rural_internet_use_anywhere ?x.
+	?a <http://example.com#name> ?n.
+}"""
+
+#	sample_query = """
+#PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+#SELECT DISTINCT ?x (?b as ?name) (AVG(?x) as ?y) 
+#WHERE{ 
+#	?a foaf:age ?x; 
+#	   foaf:name ?b; 
+#          <http://example.com#hasFriend> 
+#		[ foaf:name ?friend_name]. 
+#	OPTIONAL {?a foaf:ssn ?k}.
+
+#FILTER(isNumeric(?x)) 
+#FILTER(?x > "10").
+#} GROUP BY ?x """
 	translate_query_to_n3(sample_query, default_output_file)
 
 if __name__ == "__main__":

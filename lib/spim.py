@@ -11,6 +11,7 @@ import re
 import sparqlParser
 import sys
 from sparql1_1toN3 import translate_query_to_n3
+from policyrunner_spim import run_policy_spim
 
 sys.path.append("air-reasoner/")
 sys.path.append("../air-policies/")

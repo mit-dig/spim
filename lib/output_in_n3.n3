@@ -1,0 +1,19 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix s: <http://air.csail.mit.edu/spim_ontologies/sparql2n3_ontology.n3>.
+
+@prefix : <http://air.csail.mit.edu/spim/translation_output.n3>. 
+
+:Query127 a s:SPARQLQuery;
+	 a s:select_query;
+	s:retrieve [
+		 s:var  :a;
+		 s:var  :y;
+	];
+	s:clause [
+		s:triplePattern {  :y s:bound_as  [ s:op_avg  :x]};
+		s:triplePattern {  :a <http://data-gov.tw.rpi.edu/vocab/p/10040#rural_internet_use_anywhere>  :x };
+		s:triplePattern {  :a <http://example.com#name>  :n };
+		s:extra_desc "query asks for distinct results";
+	].
