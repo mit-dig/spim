@@ -1,11 +1,11 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix s: <http://air.csail.mit.edu/spim_ontologies/sparql2n3_ontology.n3>.
+@prefix s: <http://air.csail.mit.edu/spim_ontologies/sparql2n3_ontology#>.
 
-@prefix : <http://air.csail.mit.edu/spim/translation_output.n3>. 
+@prefix : <http://air.csail.mit.edu/spim/query_in_n3#>. 
 
-:Query127 a s:SPARQLQuery;
+:Query130 a s:SPARQLQuery;
 	 a s:select_query;
 	s:retrieve [
 		 s:var  :a;

@@ -12,7 +12,7 @@ debug = False
 
 #MUST SET THIS FILENAME IF CHANGE SERVER!!!
 default_state_file = "/home/yyyaron/spim/sparql_translate_state.txt"
-default_output_file = "output_in_n3.n3"
+default_output_file = "/var/www/spim_ontologies/query_in_n3.n3"
 
 
 #Set the header for the n3 file outputted here
@@ -23,35 +23,34 @@ default_output_file = "output_in_n3.n3"
 header = """@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix s: <http://air.csail.mit.edu/spim_ontologies/sparql2n3_ontology.n3>.
+@prefix s: <http://air.csail.mit.edu/spim_ontologies/sparql2n3_ontology#>.
 
-@prefix : <http://air.csail.mit.edu/spim/translation_output.n3>. """
+@prefix : <http://air.csail.mit.edu/spim/query_in_n3#>. """
 
 def dprint(string):
 	if debug:
 		print string
 
-#Class to build parsed tree
+#Class used to do the translation. Takes in the rasqal translation of the query, breaks it up, find the variables
+#and the patterns. It builds a tree which it later traverses to make the n3 translation.
+
 class ExpressionTreeBuilder:
 
 	def __init__(self, outputFilename):
 		self.outputFilename = outputFilename
 
+	#Main method used by the translation.
 	def translateSparqlToN3(self, query):
-		self.initialBuild(query)
-		self.parseVerbClause()
-		self.parseVarClause()
-		self.parsePatternTree()
-		print self.initialTree.other_unparsed
+		self.initialBuild(query) #Break up the output of rasqal
+		self.parseVerbClause() #What type of query is it (e.g. select, construct, etc)
+		self.parseVarClause() #Find which variables are bound
+		self.parsePatternTree() #Parse WHERE clause
 		
-		self.translateToN3()
+		self.translateToN3() #Translate
 
 	def initialBuild(self, query):
 		splitQuery = query.split('\n')
 		clauseTree = StructureSplitter()
-		print "########################"
-		print splitQuery
-		print "########################"
 		for i in range(len(splitQuery)):
 			if 'query Group graph pattern' in splitQuery[i] or 'query Basic graph pattern' in splitQuery[i]:
 				clauseTree.query_patterns_unparsed += [splitQuery[i:]]
@@ -62,7 +61,6 @@ class ExpressionTreeBuilder:
 				clauseTree.query_verb_unparsed += [splitQuery[i]]
 			else:
 				clauseTree.other_unparsed += [splitQuery[i]]
-		print "TREE CONSTRUCTED"
 		self.initialTree = clauseTree	
 		return True
 
@@ -72,14 +70,12 @@ class ExpressionTreeBuilder:
 	#Parses the verb split from the initial structure
 	def parseVerbClause(self):
 		self.query_verb = self.initialTree.query_verb_unparsed[0][12:]
-		print self.query_verb, " is query verb"
+		dprint(self.query_verb + " is query verb")
 
 	def parseVarClause(self):
-		print "@@@@@@@@   PARSING VARS" 
 		vars = self.initialTree.query_varList_unparsed
 		vars = vars[0].split(':')[1]
 		self.vars = vars.split(',')
-		print vars, ", VARS"
 		retrieved_expressions = []
 
 		#Make a clause structure if needed
@@ -92,30 +88,23 @@ class ExpressionTreeBuilder:
 
 				self.vars[i] = Variable(asASplit[0], "variable")	
 				clause = createClause(asASplit[1], '(', ')')
-				print clause
 				retrieved_expressions += [Binding([self.vars[i], clause], "binding")]
-				#self.retrieved_expressions[asASplit[0]] = clause
+
 			#Else: Variable is returned as-is, so no change.
 			else:
-				print "VARNAME", self.vars[i]	
 				self.vars[i] = Variable(self.vars[i], "variable") 
 
 		#Finally, make the retrieved expression a single clause object
 		self.retrieved_expressions = Pattern(retrieved_expressions, "retrieved_expressions")
 
 	def parsePatternTree(self):
-		print "***********************************"
-		print self.initialTree.query_patterns_unparsed
 		fullPattern = ''
 		for main_graph_pattern in self.initialTree.query_patterns_unparsed:
 			for string in main_graph_pattern:
 				fullPattern += string
-			print "############################"
 
-		print fullPattern
 
 		self.graph_patterns = createClause(fullPattern)
-		print self.graph_patterns
 
 	#Uses the data structure built by the parse functions above to construct the tree
 	def translateToN3(self):
@@ -161,9 +150,6 @@ class ExpressionTreeBuilder:
 
 		output_file.write("\t].")
 
-		print self.initialTree.other_unparsed
-		
-
 	
 ##########################################
 #Quite stupid. Scan string looking for curly bracers, until you find one. Then scan the rest of the screen to find
@@ -177,9 +163,6 @@ def createClause(string, left_brace = '{', right_brace = '}'):
 	counter_num_right_brace = 0
 	counter_num_left_brace = 0
 	
-	dprint("%%%%%%%%%%%%%%%%%%%%%%%%")
-	dprint("STRING = " + string)
-
 	#Find first curly brace
 	while counter_string < length:
 		if string[counter_string] == left_brace:
@@ -212,10 +195,8 @@ def createClause(string, left_brace = '{', right_brace = '}'):
 	#Look for op keywords before doing regex processing
 	matching = re.match('op [\w]+', keyword)
 	if matching != None:
-		print keyword, "IS IT OP?"
 		a, b = counter_string + 1, len(string) - 1 #These indices help get rid of extra parantheses
 		newString = string[a:b]
-		print newString
 		separated = newString.split(',')
 		return Operation([createClause(s, '(', ')') for s in separated], keyword.replace(' ', '_'))
 
@@ -226,7 +207,6 @@ def createClause(string, left_brace = '{', right_brace = '}'):
 #	keyword = re.sub("[^\w]\d+[\w]*", '', keyword)
 
 #	if keyword == '':
-#		print "BLANK", counter_string
 #		return createClause(string[counter_string:])
 
 	if keyword == "triple":
@@ -277,8 +257,6 @@ def createClause(string, left_brace = '{', right_brace = '}'):
 
 	#Build the subclauses from the indices
 	if len(list_subclauses) > 0:
-		dprint("We have the following subclauses")
-		dprint([string[i:j] for i, j in list_subclauses])
 		#Bit of a hack, b	
 		for i in list_subclauses:
 			b, e = i[0], i[1]
@@ -288,7 +266,6 @@ def createClause(string, left_brace = '{', right_brace = '}'):
 		return Pattern(list_built_clauses, keyword)
 
 	#If we reached this point, curly bracers were unbalanced. Error
-	print "Error: Unbalanced curlies"
 	return EmptyClause()	
 
 
@@ -369,9 +346,7 @@ class Pattern(Clause):
 	#Function not in use anymore
 	def toN3_old(self, depth = 0):
 
-		print "TOKEN IS", self.token, " AND ", self.nested_clauses
 		newStr = "__" + self.token + "__"
-		print newStr
 		#Deal with blanks first
 		if self.token == '':
 			toReturn = ''
@@ -407,12 +382,7 @@ class Filter(Clause):
 
 	#Slightly hacked by looking into next clause in series. Fix if possible
 	def toN3(self, depth = 0):
-		if len(self.nested_clauses) > 1:
-			print "LONGER LENGTH, ", len(self.nested_clauses)
 		subclause = self.nested_clauses[0]
-		if subclause.token[0:1] == 'op':
-			print subclause.token, "SUBCLAUSE"
-
 		toReturn = ''
 		toReturn = '\t'*depth + "s:filter "
 		for c in self.nested_clauses:
@@ -428,8 +398,6 @@ class Operation(Clause):
 		self.token = token
 
 	def toN3(self, depth = 0):
-		print "OP", self.token, len(self.nested_clauses)
-		print self.nested_clauses
 		toReturn = ''
 		if len(self.nested_clauses) == 2:
 			toReturn += '\t'*depth + '{'
@@ -460,7 +428,6 @@ class Variable(Clause):
 		self.token = token
 
 	def toN3(self, depth = 0):
-		print "VARIABLE TOKEN IS,", self.token
 		if self.token == "variable":
 			return " :" + self.nested_clauses[0]  
 		else:
@@ -482,7 +449,6 @@ class Triple(Clause):
 		self.token = token
 
 	def toN3(self, depth = 0):
-		print "TRIPLE", self.nested_clauses
 		toReturn = '\t'*depth + "s:triplePattern { "
 		for var in self.nested_clauses:
 			toReturn += var.toN3() + " "
@@ -519,7 +485,6 @@ def translate_query_to_n3(query, outputFilename = "query_in_n3.n3"):
 
 	#Send sparql query through roqet
 	command = "roqet -i sparql -d structure -n -e " + query
-	#os.system(command)
 	process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, )
 	output = process.communicate()[0]
 	print output

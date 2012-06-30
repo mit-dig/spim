@@ -11,7 +11,8 @@ import re
 import sparqlParser
 import sys
 from sparql1_1toN3 import translate_query_to_n3
-from policyrunner_spim import run_policy_spim
+
+import subprocess
 
 sys.path.append("air-reasoner/")
 sys.path.append("../air-policies/")
@@ -34,20 +35,53 @@ default_ranges_file = "endpoint_ranges.n3"
 default_sparql2n3_output_location = "/var/www/spim_ontologies/query_in_n3.n3"
 
 #Information for policyrunner
-
+logURI = "http://air.csail.mit.edu/spim_ontologies/query_in_n3.n3"
+ruleURI = "http://air.csail.mit.edu/spim_ontologies/policies/internet_use_policy.n3"
 
 class SPIM:
+
 	#endpointAddress = address of where is being queried
 	#endpointType = type of endpoint (e.g. 4store)
 	#userProfileList = where the user profiles are located.
+
     def __init__(self, endpointAddress, endpointType, ranges_file = default_ranges_file, profileStore = user_list, profileStoreType = '4store'):
         self.endpoint = endpointFactory(endpointAddress, endpointType) #Endpoint being queried
 	self.userList = endpointFactory(profileStore, profileStoreType) #Endpoint with user epsilon values
 	self.endpoint_ranges = parse_ranges(ranges_file) 
 
-    def acceptQuery(self, query, username, eps = 1.0):
+
+    #Main method that does full query processing. Applies AIR if asked to, otherwise just differential
+    #privacy.
+    def acceptQuery(self, query, username, eps_cost = 1.0, base_eps = "5.0", use_air = True):
+	
+	#Step 1: accept user
+	self.acceptUser(username, base_eps)
+	
+	#Step 2: Apply air if asked to. Note: AIR is run from the command line so that the reasoning
+	#tree may be used by they python program.
+
+	if use_air:
+	    translate_query_to_n3(query, default_sparql2n3_output_location) #translate the query to n3
+	    command = "python policy_runner_spim.py '" + logURI + "' '" + ruleURI + "'"
+	    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, )
+	    output = process.communicate()[0]
+	    print output
+	  
+	    if "air:non-compliant-with" in output:
+	        toReturn = "The query is non-compliant with the data-point's air policy. See below for the reasoning tree\n\n"
+	        toReturn += output
+	        return toReturn
+
+	#Step 3: Apply differential privacy
+	return self.applyDifferentialPrivacy(query, username, eps_cost)
+
+ 
 
 
+    #Function that accepts a username and some base epsilon budget and allocates a username for it if it does
+    #not exist.
+    def acceptUser(self, username, base_eps = 5.0):
+	
 	#Part 1: Create user profile if it doesn't exist in triplesotre	
 	userURI = user_graph_name_base + username + '/' + username + '>'
 	
@@ -60,8 +94,12 @@ class SPIM:
 	user_profile_result = self.userList.sendQuery(query_for_profile)
 
 	if user_profile_result == None or len(user_profile_result) == 0:
-#		print "Adding user"
-		self.addUser(username, 5.0)
+		self.addUser(username, base_eps)
+
+    def applyDifferentialPrivacy(self, query, username, eps_cost = 1.0):
+
+  	userURI = user_graph_name_base + username + '/' + username + '>'
+	eps = eps_cost #artifact, was using eps as variable name everywhere. Fix
 
 	#Minimum eps value is the most recent one, so get it. A more elegant solution is to delete old eps values, though i ran into some problems with that. For a future implementation.
 
@@ -69,11 +107,6 @@ class SPIM:
 
 	user_result = self.userList.sendQuery(query_for_epsValue)
 	
-	#Part 2: Check the query using policy runner
-	print query
-	translate_query_to_n3(query, default_sparql2n3_output_location)
-	
-
 	#Part 3: Create object to manage differential privacy
 
 	#TODO Cache users
@@ -209,8 +242,6 @@ class SPIM:
 			    sens = newSens
 		    
 	return sens
-
-
      
 #Adds key to dictionary if not there, or increments count of key by one
 def incrementKey(dic, key):
