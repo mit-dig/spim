@@ -34,6 +34,10 @@ default_ranges_file = "endpoint_ranges.n3"
 #default location for output of query to n3 translation
 default_sparql2n3_output_location = "/var/www/spim_ontologies/query_in_n3.n3"
 
+#Location of policy_spim_run.py, which is used to run the air-reasoner on the policy. 
+#CHANGE LOCATION OF FILE IF NECESSARY
+policyrunnerSpim = '/home/yyyaron/spim/lib/policy_runner_spim.py'
+
 #Information for policyrunner
 logURI = "http://air.csail.mit.edu/spim_ontologies/query_in_n3.n3"
 ruleURI = "http://air.csail.mit.edu/spim_ontologies/policies/internet_use_policy.n3"
@@ -62,20 +66,18 @@ class SPIM:
 
 	if use_air:
 	    translate_query_to_n3(query, default_sparql2n3_output_location) #translate the query to n3
-	    command = "python policy_runner_spim.py '" + logURI + "' '" + ruleURI + "'"
+	    command = "python " + policyrunnerSpim + " '" + logURI + "' '" + ruleURI + "'"
 	    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, )
 	    output = process.communicate()[0]
 	    print output
 	  
 	    if "air:non-compliant-with" in output:
-	        toReturn = "The query is non-compliant with the data-point's air policy. See below for the reasoning tree\n\n"
+	        toReturn = "The query is non-compliant with the data-point's air policy. See below for the reasoning tree\n"
 	        toReturn += output
 	        return toReturn
 
 	#Step 3: Apply differential privacy
 	return self.applyDifferentialPrivacy(query, username, eps_cost)
-
- 
 
 
     #Function that accepts a username and some base epsilon budget and allocates a username for it if it does

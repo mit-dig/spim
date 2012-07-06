@@ -14,6 +14,7 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
 
+#    url(r'^/$', 
     url(r'^spim_module/', include('spim_module.urls')),
     url(r'^openid/', include('django_openid_auth.urls')),
 

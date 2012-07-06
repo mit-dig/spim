@@ -1,7 +1,8 @@
 import sys
 
+#Change path if necessary
+sys.path.append("/home/yyyaron/spim/lib/air-reasoner")
 
-sys.path.append("air-reasoner")
 
 import policyrunner
 
