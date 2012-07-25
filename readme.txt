@@ -46,8 +46,9 @@ necessary if 4store is not used, though it will be more complicated to do so.
 		*userProfiles: Contains profiles for users for differential privacy purposes at port 86
 		*internetData: Contains census data for towns at port 81
 
-The first four are part of the sparql federation project. For more information on what data is stored
-there, consult the project folder. "userProfiles" holds the epsilon values for users in the spim module. 
+The first four are part of the sparql federation project and were obtained from dbpaedia. 
+For more information on what data is stored there, consult the project folder. 
+"userProfiles" holds the epsilon values for users in the spim module. 
 "internetData" is the current data used to test the module (subject to change)	
 
 - If for any reason you changed the port locations where the 4stores were running, or if you need to set

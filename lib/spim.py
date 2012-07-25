@@ -11,6 +11,7 @@ import re
 import sparqlParser
 import sys
 from sparql1_1toN3 import translate_query_to_n3
+import time
 
 import subprocess
 
@@ -57,6 +58,8 @@ class SPIM:
     #Main method that does full query processing. Applies AIR if asked to, otherwise just differential
     #privacy.
     def acceptQuery(self, query, username, eps_cost = 1.0, base_eps = "5.0", use_air = True):
+
+	now = time.time()
 	
 	#Step 1: accept user
 	self.acceptUser(username, base_eps)
@@ -64,17 +67,24 @@ class SPIM:
 	#Step 2: Apply air if asked to. Note: AIR is run from the command line so that the reasoning
 	#tree may be used by they python program.
 
+	print "Accepting user took ", time.time() - now, "seconds"
+	now = time.time()
+
 	if use_air:
 	    translate_query_to_n3(query, default_sparql2n3_output_location) #translate the query to n3
 	    command = "python " + policyrunnerSpim + " '" + logURI + "' '" + ruleURI + "'"
 	    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, )
 	    output = process.communicate()[0]
 	    print output
-	  
+	
+	    print "AIR took", time.time() - now, "time to process results"
+  
 	    if "air:non-compliant-with" in output:
 	        toReturn = "The query is non-compliant with the data-point's air policy. See below for the reasoning tree\n"
 	        toReturn += output
 	        return toReturn
+
+
 
 	#Step 3: Apply differential privacy
 	return self.applyDifferentialPrivacy(query, username, eps_cost)
@@ -99,6 +109,8 @@ class SPIM:
 		self.addUser(username, base_eps)
 
     def applyDifferentialPrivacy(self, query, username, eps_cost = 1.0):
+
+	now = time.time()
 
   	userURI = user_graph_name_base + username + '/' + username + '>'
 	eps = eps_cost #artifact, was using eps as variable name everywhere. Fix
@@ -136,6 +148,11 @@ class SPIM:
 	#Send query 
 
 	result = self.endpoint.sendQuery(query)
+
+	query_time = time.time() - now
+
+	print "Time for query was", query_time
+
 	print result
 	for t in result: #Iterate over terms from query
 	    for tag in allVariables:
@@ -147,6 +164,8 @@ class SPIM:
 	#Update eps value in triple store
 	newEps = currEps - eps
 	print "New eps: ", newEps
+
+	print "Time to do differential privacy was", time.time() - query_time - now, "seconds"
 
 	#In a future implementation, this deletion should be made correct and addee back in.
 #	triple_to_remove = userURI + ' <http://air.csail.mit.edu/SPIM/epsValue> "' + str(currEps) + '"'
