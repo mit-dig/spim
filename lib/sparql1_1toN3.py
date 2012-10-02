@@ -496,12 +496,23 @@ def translate_query_to_n3(query, outputFilename = "query_in_n3.n3"):
 def main():
 
 	sample_query = """
-PREFIX webOntology: <http://data-gov.tw.rpi.edu/vocab/p/10040#>
-SELECT DISTINCT ?a (AVG(?x) as ?y)
+PREFIX med_dat: <https://med_data.com#>
+SELECT (COUNT(?n) as ?num_names) (SUM(?o) as ?pills_consumed)
 WHERE{
-	?a webOntology:rural_internet_use_anywhere ?x.
-	?a <http://example.com#name> ?n.
+	?p med_dat:patient_name ?n.
+	?p med_dat:prescribed ?k.
+	?k med_dat:milligrams ?o.
 }"""
+
+	print "query"
+
+#	sample_query = """
+#PREFIX webOntology: <http://data-gov.tw.rpi.edu/vocab/p/10040#>
+#SELECT DISTINCT ?a (AVG(?x) as ?y)
+#WHERE{
+#	?a webOntology:rural_internet_use_anywhere ?x.
+#	?a <http://example.com#name> ?n.
+#}"""
 
 #	sample_query = """
 #PREFIX foaf: <http://xmlns.com/foaf/0.1/>

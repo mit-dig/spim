@@ -136,14 +136,17 @@ class SPIM:
             return "EPSILON EXCEEDED"
 #	    print "EPSILON EXCEEDED"
 
-	#Part 4: Calc query sensitivity
-	
+	#Part 4: Calc query sensitivity	
 
         allVariables = sparqlParser.extractAllVars(query)
 	whereClause = sparqlParser.extractWhere(query)
 	query_sensitivity_all = self.calc_func_sensitivity(whereClause, allVariables, query)
 	query_sensitivity = query_sensitivity_all
 #	print query_sensitivity_all
+
+	sens_time = time.time() - now
+	print "Time to calculate function sensitivity was", sens_time
+	now = time.time() #Reset time
 
 	#Send query 
 
@@ -182,7 +185,7 @@ class SPIM:
         self.userList.append_graph(user_graph_name, triple_to_add)
 	print triple_to_add
 
-	#Calculates the function's sensitivity. 
+	#Calculates the function's sensitivity. Returns the sensitivity of the MOST SENSITIVE variable in the questy. ROOM FOR OPTIMIZATION HERE 
     def calc_func_sensitivity(self, whereClause, allVars, query):
 	sens = 1.0
 	testR =  self.endpoint.sendQuery(query)
